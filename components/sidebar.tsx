@@ -1,30 +1,20 @@
 "use client"
 
 import {
-  BarChart3,
-  CreditCard,
   FileText,
-  HelpCircle,
   Home,
   LogOut,
   Settings,
-  ShoppingCart,
   TrendingUp,
   Users,
-  Bell,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navigation = [
-  { name: "Dashboard", icon: Home, current: false },
-  { name: "Orders", icon: ShoppingCart, current: true },
-  { name: "Payments", icon: CreditCard, current: false },
-  { name: "Customers", icon: Users, current: false },
-  { name: "Reports", icon: FileText, current: false },
-  { name: "Statistic", icon: BarChart3, current: false },
-  { name: "Notification", icon: Bell, current: false },
-  { name: "Help", icon: HelpCircle, current: false },
-  { name: "Settings", icon: Settings, current: false },
+  { name: "Dashboard", icon: Home, href: "/", current: false },
+  { name: "Generate Invoice", icon: FileText, href: "/invoice-generator", current: false },
+  { name: "Customers", icon: Users, href: "/customers", current: false },
+  { name: "Settings", icon: Settings, href: "/settings", current: false },
 ]
 
 export function Sidebar() {
@@ -41,7 +31,7 @@ export function Sidebar() {
         {navigation.map((item) => (
           <a
             key={item.name}
-            href="#"
+            href={item.href}
             className={cn(
               "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
               item.current ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white",
