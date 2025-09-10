@@ -1,5 +1,3 @@
-import styles from './page.module.scss';
-import Link from "next/link"
 import InvoiceGeneratorForm from "@/components/invoice-generator-form"
 import { ThemeToggle } from "@/components/theme-toggle"
 
