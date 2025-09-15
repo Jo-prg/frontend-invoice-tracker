@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { LogoutButton } from "./login-components/logout-button"
 
 const navigation = [
   { name: "Dashboard", icon: Home, href: "/", current: false },
@@ -45,13 +46,7 @@ export function Sidebar() {
 
       {/* Logout */}
       <div className="px-4 py-4 border-t border-slate-700">
-        <a
-          href="#"
-          className="flex items-center px-3 py-2 text-sm font-medium text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white transition-colors"
-        >
-          <LogOut className="w-5 h-5 mr-3" />
-          Log out
-        </a>
+        <LogoutButton />
       </div>
     </div>
   )
