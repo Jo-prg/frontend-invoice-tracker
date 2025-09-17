@@ -159,6 +159,9 @@ export function OrdersTable() {
 					</Select>
 				</div>
 				<div className="flex items-center space-x-2">
+          <Button variant="ghost" size="icon">
+            <Search className="w-5 h-5" />
+          </Button>
 					<Select defaultValue="date">
 						<SelectTrigger className="w-40">
 							<SelectValue placeholder="Sort by Date" />
