@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { LogoutButton } from "./login-components/logout-button"
+import { LogoutButton } from "@/components/login-components/logout-button"
 
 const navigation = [
   { name: "Dashboard", icon: Home, href: "/", current: false },
