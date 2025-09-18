@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MoreHorizontal, Search, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
+import { ThemeToggle } from "../theme-toggle"
 
 const orders = [
 	{
@@ -172,14 +173,7 @@ export function OrdersTable() {
 							<SelectItem value="status">Sort by Status</SelectItem>
 						</SelectContent>
 					</Select>
-					<Button
-						variant="ghost"
-						size="icon"
-						aria-label="Toggle theme"
-						onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-					>
-						{theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-					</Button>
+					<ThemeToggle />
 				</div>
 			</div>
 
