@@ -3,7 +3,6 @@
 import {
   FileText,
   Home,
-  LogOut,
   Settings,
   TrendingUp,
   Users,
@@ -20,11 +19,11 @@ const navigation = [
 
 export function Sidebar() {
   return (
-    <div className="flex flex-col w-64 bg-slate-900 text-white">
+    <div className="flex flex-col w-64 bg-background text-foreground border-r border-border max-h-screen">
       {/* Logo */}
-      <div className="flex items-center px-6 py-4 border-b border-slate-700">
+      <div className="flex items-center px-6 py-4 border-b border-border">
         <TrendingUp className="w-6 h-6 mr-2" />
-        <span className="text-lg font-semibold">ProfitPulse</span>
+        <span className="text-lg font-semibold">Invoice Tracker</span>
       </div>
 
       {/* Navigation */}
@@ -35,7 +34,9 @@ export function Sidebar() {
             href={item.href}
             className={cn(
               "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-              item.current ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white",
+              item.current
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >
             <item.icon className="w-5 h-5 mr-3" />
@@ -44,8 +45,8 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Logout */}
-      <div className="px-4 py-4 border-t border-slate-700">
+      {/* Logout & Theme Toggle */}
+      <div className="px-4 py-4 border-t border-border">
         <LogoutButton />
       </div>
     </div>
