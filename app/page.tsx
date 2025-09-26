@@ -1,4 +1,3 @@
-import { Sidebar } from "@/components/dashboard/sidebar"
 import { OrdersTable } from "@/components/dashboard/orders-table"
 import { UserMenuServer } from "@/components/dashboard/user-menu/user-menu.server"
 
