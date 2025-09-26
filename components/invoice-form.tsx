@@ -21,8 +21,8 @@ interface InvoiceFormProps {
   handleLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   addItem: () => void
   removeItem: (id: string) => void
-  calculateItemDiscount: (item: (typeof invoiceData.items)[0]) => number
-  calculateItemTotal: (item: (typeof invoiceData.items)[0]) => number
+  calculateItemDiscount: (item: InvoiceData["items"][0]) => number
+  calculateItemTotal: (item: InvoiceData["items"][0]) => number
   calculateTotalItemDiscounts: () => number
   calculateSubtotal: () => number
   calculateDiscount: () => number
