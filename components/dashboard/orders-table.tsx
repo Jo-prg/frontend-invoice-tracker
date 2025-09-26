@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MoreHorizontal, Search, Sun, Moon } from "lucide-react"
-import { useTheme } from "next-themes"
+import { MoreHorizontal, Search } from "lucide-react"
 import { ThemeToggle } from "../theme-toggle"
 
 const orders = [
@@ -130,7 +129,6 @@ function getStatusColor(status: string) {
 }
 
 export function OrdersTable() {
-	const { theme, setTheme } = useTheme()
 	return (
 		<div className="flex flex-col h-full">
 			{/* Filters */}
