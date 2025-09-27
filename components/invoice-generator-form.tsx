@@ -32,7 +32,7 @@ export default function InvoiceGeneratorForm() {
     toAddress: "",
     items: [
       {
-        id: uuidv4(),
+        id: "item-1", // Use a deterministic ID for SSR consistency
         description: "",
         quantity: 1,
         price: 0,
@@ -96,7 +96,7 @@ export default function InvoiceGeneratorForm() {
       items: [
         ...invoiceData.items,
         {
-          id: uuidv4(),
+          id: uuidv4(), // Still use uuidv4 for new items added after hydration
           description: "",
           quantity: 1,
           price: 0,
