@@ -1,5 +1,4 @@
 export interface LineItem {
-  id: string
   description: string
   quantity: number
   price: number
@@ -30,4 +29,14 @@ export interface InvoiceData {
   discountType: "percentage" | "amount"
   discountValue: number
   applyInvoiceDiscountToDiscountedItems: boolean
+  status: "Paid" | "Delivered" | "Completed" | "Unsent"
+}
+
+export interface Customers {
+  companyName: string
+  logoUrl: string
+  companyDetails: string
+  contactName: string
+  email: string
+  address: string
 }
