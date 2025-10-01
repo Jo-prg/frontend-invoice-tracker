@@ -70,7 +70,11 @@ export async function saveInvoice(invoice: InvoiceData) {
   const supabase = await createClient()
   const customerData = toSnakeCase(getCustomerData(invoice));
   const invoiceData = toSnakeCase(getInvoiceData(invoice));  
-  const lineItems = toSnakeCase(invoice["items"]);
+  // Remove 'id' from each item before saving
+  const lineItems = toSnakeCase(invoice["items"]).map((item: any) => {
+    const { id, ...rest } = item
+    return rest
+  });
 
   // Insert or upsert customer
   const { data: customer, error: customerError } = await supabase

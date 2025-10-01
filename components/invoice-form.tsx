@@ -33,10 +33,10 @@ export async function handleSubmit(
 interface InvoiceFormProps {
   invoiceData: InvoiceData
   handleInvoiceChange: (field: string, value: string | number | boolean) => void
-  handleItemChange: (id: number, field: string, value: string | number) => void
+  handleItemChange: (id: string, field: string, value: string | number) => void
   handleLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   addItem: () => void
-  removeItem: (id: number) => void
+  removeItem: (id: string) => void
   calculateItemDiscount: (item: InvoiceData["items"][0]) => number
   calculateItemTotal: (item: InvoiceData["items"][0]) => number
   calculateTotalItemDiscounts: () => number
@@ -296,46 +296,46 @@ export default function InvoiceForm({
 
           <h2 className="text-xl font-semibold mb-4">Items</h2>
           <div className="space-y-6">
-            {invoiceData.items.map((item, index) => (
-              <div key={index} className="border rounded-md p-4">
+            {invoiceData.items.map((item) => (
+              <div key={item.id} className="border rounded-md p-4">
                 <div className="mb-4">
-                  <Label htmlFor={`description-${index}`}>Description</Label>
+                  <Label htmlFor={`description-${item.id}`}>Description</Label>
                   <Input
-                    id={`description-${index}`}
+                    id={`description-${item.id}`}
                     value={item.description}
-                    onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                    onChange={(e) => handleItemChange(item.id, "description", e.target.value)}
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
                   <div className="sm:col-span-2">
-                    <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                    <Label htmlFor={`quantity-${item.id}`}>Quantity</Label>
                     <Input
-                      id={`quantity-${index}`}
+                      id={`quantity-${item.id}`}
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => handleItemChange(index, "quantity", Number.parseInt(e.target.value) || 0)}
+                      onChange={(e) => handleItemChange(item.id, "quantity", Number.parseInt(e.target.value) || 0)}
                       required
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <Label htmlFor={`price-${index}`}>Price</Label>
+                    <Label htmlFor={`price-${item.id}`}>Price</Label>
                     <Input
-                      id={`price-${index}`}
+                      id={`price-${item.id}`}
                       type="number"
                       min="0"
                       step="0.01"
                       value={item.price}
-                      onChange={(e) => handleItemChange(index, "price", Number.parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleItemChange(item.id, "price", Number.parseFloat(e.target.value) || 0)}
                       required
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <Label htmlFor={`currency-${index}`}>Currency</Label>
-                    <Select value={item.currency} onValueChange={(value) => handleItemChange(index, "currency", value)} required>
-                      <SelectTrigger id={`currency-${index}`}>
+                    <Label htmlFor={`currency-${item.id}`}>Currency</Label>
+                    <Select value={item.currency} onValueChange={(value) => handleItemChange(item.id, "currency", value)} required>
+                      <SelectTrigger id={`currency-${item.id}`}>
                         <SelectValue placeholder="Select currency" />
                       </SelectTrigger>
                       <SelectContent>
@@ -349,20 +349,20 @@ export default function InvoiceForm({
                   </div>
                   {item.currency !== invoiceData.currency && (
                     <div className="sm:col-span-3">
-                      <Label htmlFor={`exchangeRate-${index}`} className="flex items-center gap-1">
+                      <Label htmlFor={`exchangeRate-${item.id}`} className="flex items-center gap-1">
                         Exchange Rate
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
                           (1 {item.currency} = ? {invoiceData.currency})
                         </span>
                       </Label>
                       <Input
-                        id={`exchangeRate-${index}`}
+                        id={`exchangeRate-${item.id}`}
                         type="number"
                         min="0.000001"
                         step="0.000001"
                         value={item.exchangeRate}
                         onChange={(e) =>
-                          handleItemChange(index, "exchangeRate", Number.parseFloat(e.target.value) || 0)
+                          handleItemChange(item.id, "exchangeRate", Number.parseFloat(e.target.value) || 0)
                         }
                       />
                     </div>
@@ -371,7 +371,7 @@ export default function InvoiceForm({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => removeItem(index)}
+                      onClick={() => removeItem(item.id)}
                       disabled={invoiceData.items.length <= 1}
                       className="h-10 w-10"
                     >
@@ -386,19 +386,19 @@ export default function InvoiceForm({
                     <RadioGroup
                       value={item.discountType}
                       onValueChange={(value) =>
-                        handleItemChange(index, "discountType", value as "percentage" | "amount")
+                        handleItemChange(item.id, "discountType", value as "percentage" | "amount")
                       }
                       className="flex items-center gap-4 mb-2"
                     >
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="percentage" id={`percentage-${index}`} />
-                        <Label htmlFor={`percentage-${index}`} className="cursor-pointer">
+                        <RadioGroupItem value="percentage" id={`percentage-${item.id}`} />
+                        <Label htmlFor={`percentage-${item.id}`} className="cursor-pointer">
                           Percentage (%)
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="amount" id={`amount-${index}`} />
-                        <Label htmlFor={`amount-${index}`} className="cursor-pointer">
+                        <RadioGroupItem value="amount" id={`amount-${item.id}`} />
+                        <Label htmlFor={`amount-${item.id}`} className="cursor-pointer">
                           Amount
                         </Label>
                       </div>
@@ -408,7 +408,7 @@ export default function InvoiceForm({
                       min="0"
                       step={item.discountType === "percentage" ? "0.01" : "0.01"}
                       value={item.discountValue}
-                      onChange={(e) => handleItemChange(index, "discountValue", Number.parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleItemChange(item.id, "discountValue", Number.parseFloat(e.target.value) || 0)}
                       placeholder={item.discountType === "percentage" ? "%" : item.currency}
                       className="w-full"
                     />

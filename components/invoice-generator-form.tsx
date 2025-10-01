@@ -32,6 +32,7 @@ export default function InvoiceGeneratorForm() {
     toAddress: "",
     items: [
       {
+        id: "item-1",
         description: "",
         quantity: 1,
         price: 0,
@@ -70,9 +71,9 @@ export default function InvoiceGeneratorForm() {
     }
   }
 
-  const handleItemChange = (id: number, field: string, value: string | number) => {
-    const updatedItems = invoiceData.items.map((item, index) => {
-      if (index === id) {
+  const handleItemChange = (id: string, field: string, value: string | number) => {
+    const updatedItems = invoiceData.items.map((item) => {
+      if (item.id === id) {
         if (field === "currency") {
           // If currency is changed to match invoice currency, reset exchange rate to 1
           const exchangeRate = value === invoiceData.currency ? 1 : item.exchangeRate
@@ -96,6 +97,7 @@ export default function InvoiceGeneratorForm() {
       items: [
         ...invoiceData.items,
         {
+          id: uuidv4(),
           description: "",
           quantity: 1,
           price: 0,
@@ -108,11 +110,11 @@ export default function InvoiceGeneratorForm() {
     })
   }
 
-  const removeItem = (id: number) => {
+  const removeItem = (id: string) => {
     if (invoiceData.items.length > 1) {
       setInvoiceData({
         ...invoiceData,
-        items: invoiceData.items.filter((_, index) => index !== id),
+        items: invoiceData.items.filter((id) => id !== id),
       })
     }
   }
