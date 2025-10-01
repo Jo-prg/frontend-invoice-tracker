@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from "uuid"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import InvoiceForm from "@/components/invoice-form"
+import InvoiceForm, { handleSubmit as invoiceHandleSubmit } from "@/components/invoice-form"
 import InvoicePreview from "@/components/invoice-preview"
 import type { InvoiceData } from "@/types/invoice"
 
@@ -32,7 +32,6 @@ export default function InvoiceGeneratorForm() {
     toAddress: "",
     items: [
       {
-        id: "item-1", // Use a deterministic ID for SSR consistency
         description: "",
         quantity: 1,
         price: 0,
@@ -49,6 +48,7 @@ export default function InvoiceGeneratorForm() {
     discountType: "percentage",
     discountValue: 0,
     applyInvoiceDiscountToDiscountedItems: true,
+    status: "Unsent"
   })
 
   const handleInvoiceChange = (field: string, value: string | number | boolean) => {
@@ -70,9 +70,9 @@ export default function InvoiceGeneratorForm() {
     }
   }
 
-  const handleItemChange = (id: string, field: string, value: string | number) => {
-    const updatedItems = invoiceData.items.map((item) => {
-      if (item.id === id) {
+  const handleItemChange = (id: number, field: string, value: string | number) => {
+    const updatedItems = invoiceData.items.map((item, index) => {
+      if (index === id) {
         if (field === "currency") {
           // If currency is changed to match invoice currency, reset exchange rate to 1
           const exchangeRate = value === invoiceData.currency ? 1 : item.exchangeRate
@@ -96,7 +96,6 @@ export default function InvoiceGeneratorForm() {
       items: [
         ...invoiceData.items,
         {
-          id: uuidv4(), // Still use uuidv4 for new items added after hydration
           description: "",
           quantity: 1,
           price: 0,
@@ -109,11 +108,11 @@ export default function InvoiceGeneratorForm() {
     })
   }
 
-  const removeItem = (id: string) => {
+  const removeItem = (id: number) => {
     if (invoiceData.items.length > 1) {
       setInvoiceData({
         ...invoiceData,
-        items: invoiceData.items.filter((item) => item.id !== id),
+        items: invoiceData.items.filter((_, index) => index !== id),
       })
     }
   }
@@ -247,7 +246,16 @@ export default function InvoiceGeneratorForm() {
             calculateTaxableAmount={calculateTaxableAmount}
             calculateTax={calculateTax}
             calculateTotal={calculateTotal}
+            handleSubmit={invoiceHandleSubmit}
           />
+          <div className="mt-6 flex justify-end gap-2">
+            <Button
+                  variant="default"
+                  onClick={async (e) => await invoiceHandleSubmit(e, invoiceData)}
+                >
+                  Save Invoice
+                </Button>
+          </div>
         </TabsContent>
 
         <TabsContent value="preview">
@@ -265,8 +273,8 @@ export default function InvoiceGeneratorForm() {
                 calculateTotal={calculateTotal}
               />
             </div>
-            <div className="mt-6 flex justify-end">
-              <Button onClick={downloadPdf}>Download PDF</Button>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button onClick={downloadPdf}>Download PDF</Button>              
             </div>
           </Card>
         </TabsContent>
