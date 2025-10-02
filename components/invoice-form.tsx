@@ -531,6 +531,15 @@ export default function InvoiceForm({
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end gap-4 mt-4">
+        <Button
+          type="submit"
+          className="w-full sm:w-auto"
+        >
+          Save Invoice
+        </Button>
+      </div>
     </form>
   )
 }

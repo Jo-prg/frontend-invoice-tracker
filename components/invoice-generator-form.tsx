@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import InvoiceForm, { handleSubmit as invoiceHandleSubmit } from "@/components/invoice-form"
 import InvoicePreview from "@/components/invoice-preview"
 import type { InvoiceData } from "@/types/invoice"
+import { toast } from "sonner"
 
 export default function InvoiceGeneratorForm() {
   const [activeTab, setActiveTab] = useState("edit")
@@ -224,6 +225,19 @@ export default function InvoiceGeneratorForm() {
     }
   }
 
+  const handleSaveInvoice = async (e: React.FormEvent<HTMLFormElement>) => {
+    try {
+      await invoiceHandleSubmit(e, invoiceData)
+      toast.success("Your invoice was saved successfully.", {
+        description: "Invoice Saved",
+      })
+    } catch (error) {
+      toast.error("There was an error saving your invoice.", {
+        description: "Save Failed",
+      })
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -248,16 +262,8 @@ export default function InvoiceGeneratorForm() {
             calculateTaxableAmount={calculateTaxableAmount}
             calculateTax={calculateTax}
             calculateTotal={calculateTotal}
-            handleSubmit={invoiceHandleSubmit}
+            handleSubmit={handleSaveInvoice}
           />
-          <div className="mt-6 flex justify-end gap-2">
-            <Button
-                  variant="default"
-                  onClick={async (e) => await invoiceHandleSubmit(e, invoiceData)}
-                >
-                  Save Invoice
-                </Button>
-          </div>
         </TabsContent>
 
         <TabsContent value="preview">
