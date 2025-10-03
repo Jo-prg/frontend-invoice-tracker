@@ -28,13 +28,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex h-screen overflow-hidden`}>
         <Toaster position="top-center" richColors />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="flex max-h-screen"> 
-            <Sidebar />
-            <div className="flex-1 overflow-y-auto">{children}</div>            
-          </div>
+          <Sidebar />
+          <div className="flex-1 overflow-y-auto">{children}</div>            
         </ThemeProvider>
       </body>
     </html>
