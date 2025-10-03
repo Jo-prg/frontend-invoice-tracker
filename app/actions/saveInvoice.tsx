@@ -84,7 +84,7 @@ export async function saveInvoice(invoice: InvoiceData) {
     .single();
 
   if (customerError) {
-    throw new Error(customerError.message)
+    return { success: false, message: customerError.message }
   }
 
   // Attach customer_id to invoiceData
@@ -93,12 +93,12 @@ export async function saveInvoice(invoice: InvoiceData) {
   // Insert invoice
   const { data: invoiceResult, error: invoiceError } = await supabase
     .from('invoices')
-    .insert([invoiceData])
+    .upsert([invoiceData], { onConflict: 'customer_id,invoice_number' })
     .select()
     .single();
 
   if (invoiceError) {
-    throw new Error(invoiceError.message)
+    return { success: false, message: invoiceError.message }
   }
 
   // Insert line items with invoice_id
@@ -113,7 +113,9 @@ export async function saveInvoice(invoice: InvoiceData) {
       .insert(lineItemsWithInvoiceId);
 
     if (lineItemsError) {
-      throw new Error(lineItemsError.message)
+      return { success: false, message: lineItemsError.message }
     }
   }
+
+  return { success: true }
 }

@@ -9,10 +9,11 @@ import { v4 as uuidv4 } from "uuid"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import InvoiceForm, { handleSubmit as invoiceHandleSubmit } from "@/components/invoice-form"
+import InvoiceForm from "@/components/invoice-form"
 import InvoicePreview from "@/components/invoice-preview"
 import type { InvoiceData } from "@/types/invoice"
 import { toast } from "sonner"
+import { saveInvoice } from "@/app/actions/saveInvoice"
 
 export default function InvoiceGeneratorForm() {
   const [activeTab, setActiveTab] = useState("edit")
@@ -52,6 +53,8 @@ export default function InvoiceGeneratorForm() {
     applyInvoiceDiscountToDiscountedItems: true,
     status: "Unsent"
   })
+
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleInvoiceChange = (field: string, value: string | number | boolean) => {
     if (field === "currency") {
@@ -226,15 +229,25 @@ export default function InvoiceGeneratorForm() {
   }
 
   const handleSaveInvoice = async (e: React.FormEvent<HTMLFormElement>) => {
+    setIsSaving(true)
+    e.preventDefault()
     try {
-      await invoiceHandleSubmit(e, invoiceData)
-      toast.success("Your invoice was saved successfully.", {
-        description: "Invoice Saved",
-      })
-    } catch (error) {
-      toast.error("There was an error saving your invoice.", {
+      const result = await saveInvoice(invoiceData)
+      if (result && result.success === false) {
+        toast.error(result.message || "There was an error saving your invoice.", {
+          description: "Save Failed",
+        })
+      } else {
+        toast.success("Your invoice was saved successfully.", {
+          description: "Invoice Saved",
+        })
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "There was an error saving your invoice.", {
         description: "Save Failed",
       })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -263,6 +276,7 @@ export default function InvoiceGeneratorForm() {
             calculateTax={calculateTax}
             calculateTotal={calculateTotal}
             handleSubmit={handleSaveInvoice}
+            isSaving={isSaving}
           />
         </TabsContent>
 

@@ -10,25 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Trash2, Plus } from "lucide-react"
+import { Trash2, Plus, Loader2 } from "lucide-react"
 import type { InvoiceData } from "@/types/invoice"
 import { formatCurrency, currencies } from "@/lib/utils"
-import { saveInvoice } from "@/app/actions/saveInvoice"
-
-// Export handleSubmit for reuse
-export async function handleSubmit(
-  e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  invoiceData: InvoiceData
-) {
-  e.preventDefault()
-  try {
-    await saveInvoice(invoiceData)
-    // Optionally show a success message or redirect
-  } catch (error) {
-    // Optionally show an error message
-    console.error(error)
-  }
-}
 
 interface InvoiceFormProps {
   invoiceData: InvoiceData
@@ -49,6 +33,7 @@ interface InvoiceFormProps {
     e: React.FormEvent<HTMLFormElement>,
     invoiceData: InvoiceData
   ) => Promise<void>
+  isSaving?: boolean
 }
 
 export default function InvoiceForm({
@@ -67,6 +52,7 @@ export default function InvoiceForm({
   calculateTaxableAmount,
   calculateTotal,
   handleSubmit,
+  isSaving = false,
 }: InvoiceFormProps) {
   return (
     <form onSubmit={(e) => handleSubmit(e, invoiceData)}>
@@ -536,7 +522,11 @@ export default function InvoiceForm({
         <Button
           type="submit"
           className="w-full sm:w-auto"
+          disabled={isSaving}
         >
+          {isSaving ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : null}
           Save Invoice
         </Button>
       </div>
