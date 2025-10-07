@@ -118,7 +118,7 @@ export default function InvoiceGeneratorForm() {
     if (invoiceData.items.length > 1) {
       setInvoiceData({
         ...invoiceData,
-        items: invoiceData.items.filter((id) => id !== id),
+        items: invoiceData.items.filter((item) => item.id !== id),
       })
     }
   }
