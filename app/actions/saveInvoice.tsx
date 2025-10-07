@@ -101,6 +101,12 @@ export async function saveInvoice(invoice: InvoiceData) {
     return { success: false, message: invoiceError.message }
   }
 
+  // Delete existing line items for this invoice
+  await supabase
+    .from('invoice_line_items')
+    .delete()
+    .eq('invoice_id', invoiceResult.id);
+
   // Insert line items with invoice_id
   const lineItemsWithInvoiceId = lineItems.map((item: any) => ({
     ...item,
