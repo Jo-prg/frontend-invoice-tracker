@@ -84,7 +84,7 @@ export function OrdersTable() {
             let discountAmount = 0
             if (item.discountType === 'percentage') {
               discountAmount = itemTotal * (Number(item.discountValue) / 100)
-            } else if (item.discountType === 'fixed') {
+            } else if (item.discountType === 'amount') {
               discountAmount = Number(item.discountValue) || 0
             }
             
@@ -97,7 +97,7 @@ export function OrdersTable() {
           
           if (invoice.discountType === 'percentage') {
             total = subtotal * (1 - invoiceDiscountValue / 100)
-          } else if (invoice.discountType === 'fixed') {
+          } else if (invoice.discountType === 'amount') {
             total = subtotal - invoiceDiscountValue
           }
 
