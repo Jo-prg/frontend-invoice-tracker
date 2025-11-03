@@ -72,7 +72,7 @@ export default function InvoiceGeneratorForm() {
           setInvoiceData(result.data)
         } else {
           toast.error(result.message || "Failed to load invoice")
-          router.push('/generate-invoice')
+          router.push('/invoice-generator')
         }
         setIsLoading(false)
       }
@@ -267,7 +267,7 @@ export default function InvoiceGeneratorForm() {
           description: invoiceId ? "Invoice Updated" : "Invoice Saved",
         })
         if (!invoiceId && result.data) {
-          router.push(`/generate-invoice?id=${result.data.id}`)
+          router.push(`/invoice-generator?id=${result.data.id}`)
         }
       }
     } catch (error: any) {
