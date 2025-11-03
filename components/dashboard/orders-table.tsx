@@ -27,7 +27,7 @@ import { toast } from "sonner"
 interface Order {
   id: string
   dbId: string
-  customer: { name: string; avatar: string }
+  customer: { name: string; avatar: string; id: string }
   status: string
   total: string
   date: string
@@ -150,7 +150,8 @@ export function OrdersTable() {
             dbId: invoice.id,
             customer: {
               name: invoice.customers?.contactName || 'Unknown',
-              avatar: invoice.customers?.logoUrl || '/placeholder.svg'
+              avatar: invoice.customers?.logoUrl || '/placeholder.svg',
+              id: invoice.customers?.id || null
             },
             status: invoice.status || 'Paid',
             total: `${invoice.currency || '$'}${total.toFixed(2)}`,
@@ -319,7 +320,12 @@ export function OrdersTable() {
                         type="checkbox"
                         className="w-4 h-4 accent-primary border-border rounded focus:ring-ring"
                       />
-                      <span className="ml-3 text-sm font-medium text-foreground">{order.id}</span>
+                      <span 
+                        className="ml-3 text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => router.push(`/invoice-generator?id=${order.dbId}`)}
+                      >
+                        {order.id}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -333,7 +339,15 @@ export function OrdersTable() {
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="ml-3 text-sm font-medium text-foreground">
+                      <span 
+                        className="ml-3 text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (order.customer.id) {
+                            router.push(`/customers/${order.customer.id}`)
+                          }
+                        }}
+                      >
                         {order.customer.name}
                       </span>
                     </div>

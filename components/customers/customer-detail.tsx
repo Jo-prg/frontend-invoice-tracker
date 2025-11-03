@@ -297,10 +297,12 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
             {filteredInvoices.map((invoice) => (
               <tr 
                 key={invoice.id} 
-                className="hover:bg-accent cursor-pointer"
-                onClick={() => router.push(`/invoice-generator?id=${invoice.dbId}`)}
+                className="hover:bg-accent"
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
+                <td 
+                  className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => router.push(`/invoice-generator?id=${invoice.dbId}`)}
+                >
                   {invoice.id}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
