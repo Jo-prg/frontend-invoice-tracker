@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { MoreHorizontal, Search } from "lucide-react"
+import { MoreHorizontal, Search, ArrowUp, ArrowDown } from "lucide-react"
 import { ThemeToggle } from "../theme-toggle"
 import { useEffect, useState } from "react"
 import { getInvoices } from "@/app/actions/getInvoices"
@@ -30,6 +30,7 @@ interface Order {
   status: string
   total: string
   date: string
+  dateValue: number // For sorting
 }
 
 function getStatusVariant(status: string) {
@@ -64,7 +65,44 @@ export function OrdersTable() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [sortBy, setSortBy] = useState<"status" | "total" | "date">("date")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const router = useRouter()
+
+  const sortOrders = (ordersToSort: Order[], sortOption: "status" | "total" | "date", direction: "asc" | "desc") => {
+    const sorted = [...ordersToSort]
+    
+    sorted.sort((a, b) => {
+      let comparison = 0
+      
+      switch (sortOption) {
+        case "date":
+          comparison = a.dateValue - b.dateValue
+          break
+        case "total":
+          const amountA = parseFloat(a.total.replace(/[^0-9.-]+/g, ""))
+          const amountB = parseFloat(b.total.replace(/[^0-9.-]+/g, ""))
+          comparison = amountA - amountB
+          break
+        case "status":
+          comparison = a.status.localeCompare(b.status)
+          break
+      }
+      
+      return direction === "asc" ? comparison : -comparison
+    })
+    
+    return sorted
+  }
+
+  const handleHeaderClick = (column: "status" | "total" | "date") => {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setSortBy(column)
+      setSortDirection("desc")
+    }
+  }
 
   useEffect(() => {
     async function fetchInvoices() {
@@ -72,9 +110,7 @@ export function OrdersTable() {
       const result = await getInvoices()
       
       if (result.success && result.data) {
-        // Transform invoice data to match order structure
         const transformedOrders = result.data.map((invoice: any) => {
-          
           // Calculate total from line items
           const subtotal = invoice.invoiceLineItems?.reduce((sum: number, item: any) => {
             const quantity = Number(item.quantity) || 0
@@ -105,6 +141,8 @@ export function OrdersTable() {
           const taxRate = Number(invoice.taxRate) || 0
           total = total * (1 + taxRate / 100)
 
+          const invoiceDate = new Date(invoice.date)
+
           return {
             id: invoice.invoiceNumber,
             dbId: invoice.id,
@@ -114,17 +152,22 @@ export function OrdersTable() {
             },
             status: invoice.status || 'Paid',
             total: `${invoice.currency || '$'}${total.toFixed(2)}`,
-            date: new Date(invoice.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            date: invoiceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            dateValue: invoiceDate.getTime()
           }
         })
         
-        setOrders(transformedOrders)
+        setOrders(sortOrders(transformedOrders, sortBy, sortDirection))
       }
       setLoading(false)
     }
 
     fetchInvoices()
   }, [])
+
+  useEffect(() => {
+    setOrders(prevOrders => sortOrders(prevOrders, sortBy, sortDirection))
+  }, [sortBy, sortDirection])
 
   const handleDeleteClick = (orderId: string) => {
     setSelectedOrderId(orderId)
@@ -200,16 +243,6 @@ export function OrdersTable() {
             <Button variant="ghost" size="icon">
               <Search className="w-5 h-5" />
             </Button>
-            <Select defaultValue="date">
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Sort by Date" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date">Sort by Date</SelectItem>
-                <SelectItem value="amount">Sort by Amount</SelectItem>
-                <SelectItem value="status">Sort by Status</SelectItem>
-              </SelectContent>
-            </Select>
             <ThemeToggle />
           </div>
         </div>
@@ -225,14 +258,50 @@ export function OrdersTable() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Customer
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Status
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => handleHeaderClick("status")}
+                >
+                  <div className="flex items-center gap-2">
+                    Status
+                    {sortBy === "status" && (
+                      sortDirection === "asc" ? (
+                        <ArrowUp className="w-4 h-4 text-blue-500" />
+                      ) : (
+                        <ArrowDown className="w-4 h-4 text-red-500" />
+                      )
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Total
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => handleHeaderClick("total")}
+                >
+                  <div className="flex items-center gap-2">
+                    Total
+                    {sortBy === "total" && (
+                      sortDirection === "asc" ? (
+                        <ArrowUp className="w-4 h-4 text-blue-500" />
+                      ) : (
+                        <ArrowDown className="w-4 h-4 text-red-500" />
+                      )
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Date
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => handleHeaderClick("date")}
+                >
+                  <div className="flex items-center gap-2">
+                    Date
+                    {sortBy === "date" && (
+                      sortDirection === "asc" ? (
+                        <ArrowUp className="w-4 h-4 text-blue-500" />
+                      ) : (
+                        <ArrowDown className="w-4 h-4 text-red-500" />
+                      )
+                    )}
+                  </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"></th>
               </tr>
