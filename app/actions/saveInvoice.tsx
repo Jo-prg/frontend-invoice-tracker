@@ -76,29 +76,67 @@ export async function saveInvoice(invoice: InvoiceData) {
     return rest
   });
 
-  // Insert or upsert customer
-  const { data: customer, error: customerError } = await supabase
-    .from('customers')
-    .upsert([customerData], { onConflict: 'user_id,email' })
-    .select()
-    .single();
+  let customer;
+  let customerId = invoice.customerId;
 
-  if (customerError) {
-    return { success: false, message: customerError.message }
+  if (customerId) {
+    // Update existing customer
+    const { data: updatedCustomer, error: customerError } = await supabase
+      .from('customers')
+      .update(customerData)
+      .eq('id', customerId)
+      .select()
+      .single();
+
+    if (customerError) {
+      return { success: false, message: customerError.message }
+    }
+    customer = updatedCustomer;
+  } else {
+    // Insert new customer
+    const { data: newCustomer, error: customerError } = await supabase
+      .from('customers')
+      .insert(customerData)
+      .select()
+      .single();
+
+    if (customerError) {
+      return { success: false, message: customerError.message }
+    }
+    customer = newCustomer;
+    customerId = newCustomer.id;
   }
 
   // Attach customer_id to invoiceData
-  invoiceData.customer_id = customer.id;
+  invoiceData.customer_id = customerId;
 
-  // Insert invoice
-  const { data: invoiceResult, error: invoiceError } = await supabase
-    .from('invoices')
-    .upsert([invoiceData], { onConflict: 'customer_id,invoice_number' })
-    .select()
-    .single();
+  let invoiceResult;
 
-  if (invoiceError) {
-    return { success: false, message: invoiceError.message }
+  if (invoice.id) {
+    // Update existing invoice
+    const { data, error: invoiceError } = await supabase
+      .from('invoices')
+      .update(invoiceData)
+      .eq('id', invoice.id)
+      .select()
+      .single();
+
+    if (invoiceError) {
+      return { success: false, message: invoiceError.message }
+    }
+    invoiceResult = data;
+  } else {
+    // Insert new invoice
+    const { data, error: invoiceError } = await supabase
+      .from('invoices')
+      .insert(invoiceData)
+      .select()
+      .single();
+
+    if (invoiceError) {
+      return { success: false, message: invoiceError.message }
+    }
+    invoiceResult = data;
   }
 
   // Delete existing line items for this invoice
@@ -123,5 +161,5 @@ export async function saveInvoice(invoice: InvoiceData) {
     }
   }
 
-  return { success: true }
+  return { success: true, data: invoiceResult }
 }

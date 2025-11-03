@@ -7,100 +7,18 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MoreHorizontal, Search } from "lucide-react"
 import { ThemeToggle } from "../theme-toggle"
+import { useEffect, useState } from "react"
+import { getInvoices } from "@/app/actions/getInvoices"
+import { useRouter } from "next/navigation"
 
-const orders = [
-	{
-		id: "#380561",
-		customer: { name: "Michelle Black", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Paid",
-		total: "$780.00",
-		date: "Jan 8",
-	},
-	{
-		id: "#663334",
-		customer: { name: "Janice Chandler", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Delivered",
-		total: "$1,250.00",
-		date: "Jan 6",
-	},
-	{
-		id: "#418135",
-		customer: { name: "Mildred Hall", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Paid",
-		total: "$540.95",
-		date: "Jan 5",
-	},
-	{
-		id: "#801939",
-		customer: { name: "Ana Carter", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Paid",
-		total: "$1,488.00",
-		date: "Jan 2",
-	},
-	{
-		id: "#517783",
-		customer: { name: "John Sherman", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Completed",
-		total: "$925.00",
-		date: "Dec 28",
-	},
-	{
-		id: "#602992",
-		customer: { name: "James Miller", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Paid",
-		total: "$1,620.00",
-		date: "Dec 26",
-	},
-	{
-		id: "#730345",
-		customer: { name: "Travis French", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Paid",
-		total: "$315.50",
-		date: "Dec 22",
-	},
-	{
-		id: "#126955",
-		customer: { name: "Ralph Hall", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Paid",
-		total: "$1,387.45",
-		date: "Dec 20",
-	},
-	{
-		id: "#045321",
-		customer: { name: "Gary Gilbert", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Completed",
-		total: "$297.00",
-		date: "Dec 18",
-	},
-	{
-		id: "#062848",
-		customer: { name: "Frances Howell", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Delivered",
-		total: "$1,794.00",
-		date: "Dec 17",
-	},
-	{
-		id: "#545072",
-		customer: { name: "Herbert Boyd", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Paid",
-		total: "$714.00",
-		date: "Dec 14",
-	},
-	{
-		id: "#432019",
-		customer: { name: "Alan White", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Paid",
-		total: "$267.65",
-		date: "Dec 13",
-	},
-	{
-		id: "#885927",
-		customer: { name: "Julie Martin", avatar: "/placeholder.svg?height=32&width=32" },
-		status: "Delivered",
-		total: "$389.00",
-		date: "Dec 11",
-	},
-]
+interface Order {
+  id: string
+  dbId: string
+  customer: { name: string; avatar: string }
+  status: string
+  total: string
+  date: string
+}
 
 function getStatusVariant(status: string) {
 	switch (status) {
@@ -129,6 +47,78 @@ function getStatusColor(status: string) {
 }
 
 export function OrdersTable() {
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    async function fetchInvoices() {
+      setLoading(true)
+      const result = await getInvoices()
+      
+      if (result.success && result.data) {
+        // Transform invoice data to match order structure
+        const transformedOrders = result.data.map((invoice: any) => {
+          
+          // Calculate total from line items
+          const subtotal = invoice.invoiceLineItems?.reduce((sum: number, item: any) => {
+            const quantity = Number(item.quantity) || 0
+            const price = Number(item.price) || 0
+            const itemTotal = quantity * price
+            
+            let discountAmount = 0
+            if (item.discountType === 'percentage') {
+              discountAmount = itemTotal * (Number(item.discountValue) / 100)
+            } else if (item.discountType === 'fixed') {
+              discountAmount = Number(item.discountValue) || 0
+            }
+            
+            return sum + itemTotal - discountAmount
+          }, 0) || 0
+
+          // Apply invoice-level discount
+          let total = subtotal
+          const invoiceDiscountValue = Number(invoice.discountValue) || 0
+          
+          if (invoice.discountType === 'percentage') {
+            total = subtotal * (1 - invoiceDiscountValue / 100)
+          } else if (invoice.discountType === 'fixed') {
+            total = subtotal - invoiceDiscountValue
+          }
+
+          // Apply tax
+          const taxRate = Number(invoice.taxRate) || 0
+          total = total * (1 + taxRate / 100)
+
+          return {
+            id: invoice.invoiceNumber,
+            dbId: invoice.id,
+            customer: {
+              name: invoice.customers?.contactName || 'Unknown',
+              avatar: invoice.customers?.logoUrl || '/placeholder.svg'
+            },
+            status: invoice.status || 'Paid',
+            total: `${invoice.currency || '$'}${total.toFixed(2)}`,
+            date: new Date(invoice.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          }
+        })
+        
+        setOrders(transformedOrders)
+      }
+      setLoading(false)
+    }
+
+    fetchInvoices()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted-foreground">Loading invoices...</p>
+      </div>
+    )
+  }
+
 	return (
 		<div className="flex flex-col h-full">
 			{/* Filters */}
@@ -243,8 +233,9 @@ export function OrdersTable() {
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end">
-											<DropdownMenuItem>View details</DropdownMenuItem>
-											<DropdownMenuItem>Edit order</DropdownMenuItem>
+											<DropdownMenuItem onClick={() => router.push(`/invoice-generator?id=${order.dbId}`)}>
+                        Edit order
+                      </DropdownMenuItem>
 											<DropdownMenuItem>Delete order</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>

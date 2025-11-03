@@ -34,6 +34,7 @@ interface InvoiceFormProps {
     invoiceData: InvoiceData
   ) => Promise<void>
   isSaving?: boolean
+  isEditing?: boolean
 }
 
 export default function InvoiceForm({
@@ -53,6 +54,7 @@ export default function InvoiceForm({
   calculateTotal,
   handleSubmit,
   isSaving = false,
+  isEditing = false,
 }: InvoiceFormProps) {
   return (
     <form onSubmit={(e) => handleSubmit(e, invoiceData)}>
@@ -527,7 +529,7 @@ export default function InvoiceForm({
           {isSaving ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : null}
-          Save Invoice
+          {isEditing ? 'Update Invoice' : 'Save Invoice'}
         </Button>
       </div>
     </form>

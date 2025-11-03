@@ -10,6 +10,8 @@ export interface LineItem {
 }
 
 export interface InvoiceData {
+  id?: string
+  customerId?: string
   invoiceNumber: string
   date: string
   dueDate: string

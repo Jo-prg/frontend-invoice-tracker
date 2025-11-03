@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { jsPDF } from "jspdf"
 import html2canvas from "html2canvas"
 import { v4 as uuidv4 } from "uuid"
@@ -14,10 +14,15 @@ import InvoicePreview from "@/components/invoice-preview"
 import type { InvoiceData } from "@/types/invoice"
 import { toast } from "sonner"
 import { saveInvoice } from "@/app/actions/saveInvoice"
+import { getInvoice } from "@/app/actions/getInvoice"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export default function InvoiceGeneratorForm() {
   const [activeTab, setActiveTab] = useState("edit")
   const invoiceRef = useRef<HTMLDivElement>(null)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const invoiceId = searchParams.get('id')
 
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
     invoiceNumber: `INV-${Math.floor(Math.random() * 10000)}`,
@@ -55,6 +60,26 @@ export default function InvoiceGeneratorForm() {
   })
 
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    async function loadInvoice() {
+      if (invoiceId) {
+        setIsLoading(true)
+        const result = await getInvoice(invoiceId)
+        
+        if (result.success && result.data) {
+          setInvoiceData(result.data)
+        } else {
+          toast.error(result.message || "Failed to load invoice")
+          router.push('/generate-invoice')
+        }
+        setIsLoading(false)
+      }
+    }
+
+    loadInvoice()
+  }, [invoiceId, router])
 
   const handleInvoiceChange = (field: string, value: string | number | boolean) => {
     if (field === "currency") {
@@ -238,9 +263,12 @@ export default function InvoiceGeneratorForm() {
           description: "Save Failed",
         })
       } else {
-        toast.success("Your invoice was saved successfully.", {
-          description: "Invoice Saved",
+        toast.success(invoiceId ? "Your invoice was updated successfully." : "Your invoice was saved successfully.", {
+          description: invoiceId ? "Invoice Updated" : "Invoice Saved",
         })
+        if (!invoiceId && result.data) {
+          router.push(`/generate-invoice?id=${result.data.id}`)
+        }
       }
     } catch (error: any) {
       toast.error(error?.message || "There was an error saving your invoice.", {
@@ -249,6 +277,14 @@ export default function InvoiceGeneratorForm() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Loading invoice...</p>
+      </div>
+    )
   }
 
   return (
