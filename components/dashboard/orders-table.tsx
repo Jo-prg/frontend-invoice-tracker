@@ -227,30 +227,17 @@ export function OrdersTable() {
       <div className="flex flex-col h-full">
         {/* Filters */}
         <div className="flex items-center justify-between px-6 py-4 bg-background border-b">
-          <div className="flex items-center space-x-4">
-            <Select defaultValue="any">
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Any status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any status</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select defaultValue="100-500">
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="$100 - $500" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="100-500">$100 - $500</SelectItem>
-                <SelectItem value="500-1000">$500 - $1000</SelectItem>
-                <SelectItem value="1000+">$1000+</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+					<Select defaultValue="any">
+						<SelectTrigger className="w-32">
+							<SelectValue placeholder="Any status" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="any">Any status</SelectItem>
+							<SelectItem value="paid">Paid</SelectItem>
+							<SelectItem value="delivered">Delivered</SelectItem>
+							<SelectItem value="completed">Completed</SelectItem>
+						</SelectContent>
+					</Select>
           <div className="flex items-center space-x-2">
             {/* Move search bar here */}
             <Input
