@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +68,7 @@ export function OrdersTable() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [sortBy, setSortBy] = useState<"status" | "total" | "date">("date")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+  const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
 
   const sortOrders = (ordersToSort: Order[], sortOption: "status" | "total" | "date", direction: "asc" | "desc") => {
@@ -169,6 +171,16 @@ export function OrdersTable() {
     setOrders(prevOrders => sortOrders(prevOrders, sortBy, sortDirection))
   }, [sortBy, sortDirection])
 
+  const filteredOrders = orders.filter((order) => {
+    if (!searchQuery.trim()) return true
+    
+    const query = searchQuery.toLowerCase()
+    const matchesOrderId = order.id.toLowerCase().includes(query)
+    const matchesCustomerName = order.customer.name.toLowerCase().includes(query)
+    
+    return matchesOrderId || matchesCustomerName
+  })
+
   const handleDeleteClick = (orderId: string) => {
     setSelectedOrderId(orderId)
     setDeleteDialogOpen(true)
@@ -240,9 +252,14 @@ export function OrdersTable() {
             </Select>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon">
-              <Search className="w-5 h-5" />
-            </Button>
+            {/* Move search bar here */}
+            <Input
+              type="text"
+              placeholder="Search orders or customers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-64"
+            />
             <ThemeToggle />
           </div>
         </div>
@@ -307,7 +324,7 @@ export function OrdersTable() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-accent">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
