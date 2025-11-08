@@ -339,10 +339,12 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
                 className="hover:bg-accent"
               >
                 <td 
-                  className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
+                  className="px-6 py-4 whitespace-nowrap"
                   onClick={() => router.push(`/invoice-generator?id=${invoice.dbId}`)}
                 >
-                  {invoice.id}
+                  <span className="text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors">
+                    {invoice.id}
+                  </span>                  
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <DropdownMenu>

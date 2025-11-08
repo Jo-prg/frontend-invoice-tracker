@@ -411,7 +411,9 @@ export function OrdersTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/invoice-generator?id=${order.dbId}`)}>
+                        <DropdownMenuItem 
+                          onClick={() => router.push(`/invoice-generator?id=${order.dbId}`)}
+                        >
                           Edit order
                         </DropdownMenuItem>
                         <DropdownMenuItem 
@@ -505,7 +507,7 @@ export function OrdersTable() {
             <AlertDialogAction 
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
