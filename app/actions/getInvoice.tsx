@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import type { InvoiceData } from "@/types/invoice"
+import { getUserCompany } from "./getUserCompany"
 
 export async function getInvoice(invoiceId: string) {
   const supabase = await createClient()
@@ -51,29 +52,21 @@ export async function getInvoice(invoiceId: string) {
     return { success: false, message: "Invoice not found" }
   }
 
-  // Fetch user_company info separately
-  const { data: companyData, error: companyError } = await supabase
-    .from('user_company')
-    .select(`
-      company_name,
-      company_logo,
-      company_details,
-      from_name,
-      from_email,
-      from_address
-    `)
-    .single()
+  // Fetch user_company info using the shared action
+  const companyResult = await getUserCompany()
 
-  if (companyError) {
-    return { success: false, message: companyError.message }
+  if (!companyResult.success) {
+    return { success: false, message: companyResult.message || "Failed to fetch company data" }
   }
 
-  const userCompany = companyData?.company_name || "";
-  const companyLogo = companyData?.company_logo || "";
-  const companyDetails = companyData?.company_details || "";
-  const fromName = companyData?.from_name || "";
-  const fromEmail = companyData?.from_email || "";
-  const fromAddress = companyData?.from_address || "";
+  const companyData = companyResult.data || {
+    companyName: "",
+    companyLogo: "",
+    companyDetails: "",
+    fromName: "",
+    fromEmail: "",
+    fromAddress: "",
+  }
 
   const customers = Array.isArray(invoice.customers) ? invoice.customers[0] : invoice.customers;
 
@@ -82,12 +75,12 @@ export async function getInvoice(invoiceId: string) {
     invoiceNumber: invoice.invoice_number,
     date: invoice.date,
     dueDate: invoice.due_date,
-    companyName: userCompany,
-    companyLogo,
-    companyDetails,
-    fromName,
-    fromEmail,
-    fromAddress,
+    companyName: companyData.companyName || "",
+    companyLogo: companyData.companyLogo || "",
+    companyDetails: companyData.companyDetails || "",
+    fromName: companyData.fromName || "",
+    fromEmail: companyData.fromEmail || "",
+    fromAddress: companyData.fromAddress || "",
     toName: customers?.to_name || "",
     toEmail: customers?.to_email || "",
     toAddress: customers?.to_address || "",

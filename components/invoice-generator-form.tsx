@@ -15,6 +15,7 @@ import type { InvoiceData } from "@/types/invoice"
 import { toast } from "sonner"
 import { saveInvoice } from "@/app/actions/saveInvoice"
 import { getInvoice } from "@/app/actions/getInvoice"
+import { getUserCompany } from "@/app/actions/getUserCompany"
 import { useSearchParams, useRouter } from "next/navigation"
 
 export default function InvoiceGeneratorForm() {
@@ -76,6 +77,22 @@ export default function InvoiceGeneratorForm() {
         }
         setIsLoading(false)
       } else {
+        // Fetch company data to pre-fill fields
+        setIsLoading(true)
+        const companyResult = await getUserCompany()
+        
+        if (companyResult.success && companyResult.data) {
+          setInvoiceData(prev => ({
+            ...prev,
+            companyName: companyResult.data.companyName,
+            companyLogo: companyResult.data.companyLogo,
+            companyDetails: companyResult.data.companyDetails,
+            fromName: companyResult.data.fromName,
+            fromEmail: companyResult.data.fromEmail,
+            fromAddress: companyResult.data.fromAddress,
+          }))
+        }
+
         // Pre-fill customer data from URL params if available
         const toName = searchParams.get('toName')
         const toEmail = searchParams.get('toEmail')
@@ -89,6 +106,8 @@ export default function InvoiceGeneratorForm() {
             toAddress: toAddress || prev.toAddress,
           }))
         }
+        
+        setIsLoading(false)
       }
     }
 
