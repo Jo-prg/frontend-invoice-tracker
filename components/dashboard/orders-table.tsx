@@ -28,7 +28,7 @@ import { toast } from "sonner"
 interface Order {
   id: string
   dbId: string
-  customer: { name: string; avatar: string; id: string }
+  customer: { name: string; avatar: string; id: string; email: string }
   status: string
   total: string
   date: string
@@ -154,7 +154,8 @@ export function OrdersTable() {
             customer: {
               name: invoice.customers?.toName || 'Unknown',
               avatar: '/placeholder.svg',
-              id: invoice.customers?.id || null
+              id: invoice.customers?.id || null,
+              email: invoice.customers?.toEmail || ''
             },
             status: invoice.status || 'Paid',
             total: `${invoice.currency || '$'}${total.toFixed(2)}`,
@@ -285,6 +286,9 @@ export function OrdersTable() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Customer
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Email
+                </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
                   onClick={() => handleHeaderClick("status")}
@@ -335,7 +339,7 @@ export function OrdersTable() {
             </thead>
             <tbody className="divide-y divide-border">
               {paginatedOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-accent">
+                <tr key={order.dbId} className="hover:bg-accent">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <input
@@ -373,6 +377,11 @@ export function OrdersTable() {
                         {order.customer.name}
                       </span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground">
+                      {order.customer.email || 'N/A'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <DropdownMenu>
