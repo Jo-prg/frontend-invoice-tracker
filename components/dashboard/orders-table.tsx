@@ -247,18 +247,7 @@ export function OrdersTable() {
     <>
       <div className="flex flex-col h-full">
         {/* Filters */}
-        <div className="flex items-center justify-between px-6 py-4 bg-background border-b">
-					<Select defaultValue="any">
-						<SelectTrigger className="w-32">
-							<SelectValue placeholder="Any status" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="any">Any status</SelectItem>
-							<SelectItem value="paid">Paid</SelectItem>
-							<SelectItem value="delivered">Delivered</SelectItem>
-							<SelectItem value="completed">Completed</SelectItem>
-						</SelectContent>
-					</Select>
+        <div className="flex ml-auto px-6 py-4 bg-background border-b">
           <div className="flex items-center space-x-2">
             {/* Move search bar here */}
             <Input
