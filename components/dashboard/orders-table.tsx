@@ -341,18 +341,12 @@ export function OrdersTable() {
               {paginatedOrders.map((order) => (
                 <tr key={order.dbId} className="hover:bg-accent">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 accent-primary border-border rounded focus:ring-ring"
-                      />
-                      <span 
-                        className="ml-3 text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
-                        onClick={() => router.push(`/invoice-generator?id=${order.dbId}`)}
-                      >
-                        {order.id}
-                      </span>
-                    </div>
+                    <span 
+                      className="text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => router.push(`/invoice-generator?id=${order.dbId}`)}
+                    >
+                      {order.id}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
