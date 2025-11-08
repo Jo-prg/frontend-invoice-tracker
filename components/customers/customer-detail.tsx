@@ -4,8 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ArrowLeft, Mail, MapPin, Building, ArrowUp, ArrowDown } from "lucide-react"
+import { ArrowLeft, Mail, MapPin, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getCustomerWithInvoices } from "@/app/actions/getCustomerWithInvoices"
 import { updateInvoiceStatus } from "@/app/actions/updateInvoiceStatus"
@@ -47,6 +48,8 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<"status" | "total" | "date">("date")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const router = useRouter()
 
   const sortInvoices = (invoicesToSort: Invoice[], sortOption: "status" | "total" | "date", direction: "asc" | "desc") => {
@@ -153,6 +156,17 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
     
     return matchesInvoiceId || matchesStatus
   })
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedInvoices = filteredInvoices.slice(startIndex, endIndex)
+
+  // Reset to page 1 when search or sort changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, sortBy, sortDirection])
 
   const handleStatusChange = async (invoiceDbId: string, newStatus: string) => {
     try {
@@ -316,7 +330,7 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {filteredInvoices.map((invoice) => (
+            {paginatedInvoices.map((invoice) => (
               <tr 
                 key={invoice.id} 
                 className="hover:bg-accent"
@@ -366,6 +380,56 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredInvoices.length > 0 && (
+        <div className="flex items-center justify-between px-6 py-4 bg-background border-t">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Rows per page:</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number(value))
+                setCurrentPage(1)
+              }}
+            >
+              <SelectTrigger className="w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

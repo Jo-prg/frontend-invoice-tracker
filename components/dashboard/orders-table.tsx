@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { MoreHorizontal, Search, ArrowUp, ArrowDown } from "lucide-react"
+import { MoreHorizontal, Search, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { ThemeToggle } from "../theme-toggle"
 import { useEffect, useState } from "react"
 import { getInvoices } from "@/app/actions/getInvoices"
@@ -70,6 +70,8 @@ export function OrdersTable() {
   const [sortBy, setSortBy] = useState<"status" | "total" | "date">("date")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const router = useRouter()
 
   const sortOrders = (ordersToSort: Order[], sortOption: "status" | "total" | "date", direction: "asc" | "desc") => {
@@ -182,6 +184,17 @@ export function OrdersTable() {
     
     return matchesOrderId || matchesCustomerName
   })
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex)
+
+  // Reset to page 1 when search or sort changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, sortBy, sortDirection])
 
   const handleDeleteClick = (orderId: string) => {
     setSelectedOrderId(orderId)
@@ -321,7 +334,7 @@ export function OrdersTable() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredOrders.map((order) => (
+              {paginatedOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-accent">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -412,6 +425,56 @@ export function OrdersTable() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {filteredOrders.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 bg-background border-t">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value))
+                  setCurrentPage(1)
+                }}
+              >
+                <SelectTrigger className="w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <AlertDialog
