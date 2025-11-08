@@ -166,7 +166,10 @@ export async function saveInvoice(invoice: InvoiceData) {
       .single();
 
     if (invoiceError) {
-      return { success: false, message: invoiceError.message }
+      const message = invoiceError.code === '23505' 
+        ? 'An invoice with this number already exists for this customer'
+        : invoiceError.message;
+      return { success: false, message }
     }
     invoiceResult = data;
   } else {
@@ -178,7 +181,10 @@ export async function saveInvoice(invoice: InvoiceData) {
       .single();
 
     if (invoiceError) {
-      return { success: false, message: invoiceError.message }
+      const message = invoiceError.code === '23505' 
+        ? 'An invoice with this number already exists for this customer'
+        : invoiceError.message;
+      return { success: false, message }
     }
     invoiceResult = data;
   }
