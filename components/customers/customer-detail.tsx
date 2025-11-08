@@ -189,10 +189,9 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
 
   const handleCreateInvoice = () => {
     const params = new URLSearchParams({
-      toName: customer.contactName || '',
-      toEmail: customer.email || '',
-      toAddress: customer.address || '',
-      companyName: customer.companyName || '',
+      toName: customer.toName || '',
+      toEmail: customer.toEmail || '',
+      toAddress: customer.toAddress || '',
     })
     router.push(`/invoice-generator?${params.toString()}`)
   }
@@ -236,9 +235,9 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
       <div className="px-6 py-6 bg-background border-b">
         <div className="flex items-start gap-6">
           <Avatar className="w-20 h-20">
-            <AvatarImage src={customer.logoUrl || "/placeholder.svg"} />
+            <AvatarImage src={"/placeholder.svg"} />
             <AvatarFallback className="text-2xl">
-              {customer.contactName
+              {customer.toName
                 ?.split(" ")
                 .map((n: string) => n[0])
                 .join("") || "?"}
@@ -246,32 +245,20 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
           </Avatar>
           
           <div className="flex-1 space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold">{customer.contactName}</h2>
-              {customer.companyName && (
-                <p className="text-muted-foreground">{customer.companyName}</p>
-              )}
-            </div>
+            <h2 className="text-2xl font-bold">{customer.toName}</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {customer.email && (
+              {customer.toEmail && (
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span>{customer.email}</span>
+                  <span>{customer.toEmail}</span>
                 </div>
               )}
               
-              {customer.address && (
+              {customer.toAddress && (
                 <div className="flex items-center gap-2 text-sm">
                   <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span>{customer.address}</span>
-                </div>
-              )}
-              
-              {customer.companyDetails && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Building className="w-4 h-4 text-muted-foreground" />
-                  <span>{customer.companyDetails}</span>
+                  <span>{customer.toAddress}</span>
                 </div>
               )}
             </div>

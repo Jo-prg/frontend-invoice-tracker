@@ -20,12 +20,20 @@ function toSnakeCase(obj: any): any {
 
 function getCustomerData(invoice: InvoiceData): Customers {
   return {
+    toName: invoice.toName,
+    toEmail: invoice.toEmail,
+    toAddress: invoice.toAddress,
+  }
+}
+
+function getCompanyData(invoice: InvoiceData) {
+  return {
     companyName: invoice.companyName,
-    logoUrl: invoice.companyLogo,
+    companyLogo: invoice.companyLogo,
     companyDetails: invoice.companyDetails,
-    contactName: invoice.toName,
-    email: invoice.toEmail,
-    address: invoice.toAddress,
+    fromName: invoice.fromName,
+    fromEmail: invoice.fromEmail,
+    fromAddress: invoice.fromAddress,
   }
 }
 
@@ -38,13 +46,11 @@ function getInvoiceData(invoice: InvoiceData) {
     discountValue,
     dueDate,
     footer,
-    fromAddress,
-    fromEmail,
-    fromName,
     invoiceNumber,
     notes,
     status,
     taxRate
+    // removed company and from fields
   } = invoice
 
   return {
@@ -55,9 +61,6 @@ function getInvoiceData(invoice: InvoiceData) {
     discountValue,
     dueDate,
     footer,
-    fromAddress,
-    fromEmail,
-    fromName,
     invoiceNumber,
     notes,
     status,
@@ -70,6 +73,7 @@ export async function saveInvoice(invoice: InvoiceData) {
   const supabase = await createClient()
   const customerData = toSnakeCase(getCustomerData(invoice));
   const invoiceData = toSnakeCase(getInvoiceData(invoice));  
+  const companyData = toSnakeCase(getCompanyData(invoice));
   // Remove 'id' from each item before saving
   const lineItems = toSnakeCase(invoice["items"]).map((item: any) => {
     const { id, ...rest } = item
@@ -109,6 +113,34 @@ export async function saveInvoice(invoice: InvoiceData) {
 
   // Attach customer_id to invoiceData
   invoiceData.customer_id = customerId;
+
+  // Save or update company info
+  // Try to find existing company for this user
+  const { data: existingCompany, error: companyFetchError } = await supabase
+    .from('user_company')
+    .select()
+    .single();
+
+  if (existingCompany) {
+    // Update existing company
+    const { error: companyUpdateError } = await supabase
+      .from('user_company')
+      .update(companyData)
+      .eq('id', existingCompany.id); // use primary key instead
+
+    if (companyUpdateError) {
+      return { success: false, message: companyUpdateError.message }
+    }
+  } else {
+    // Insert new company
+    const { error: companyInsertError } = await supabase
+      .from('user_company')
+      .insert(companyData);
+
+    if (companyInsertError) {
+      return { success: false, message: companyInsertError.message }
+    }
+  }
 
   let invoiceResult;
 

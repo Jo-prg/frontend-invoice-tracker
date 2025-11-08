@@ -152,8 +152,8 @@ export function OrdersTable() {
             id: invoice.invoiceNumber,
             dbId: invoice.id,
             customer: {
-              name: invoice.customers?.contactName || 'Unknown',
-              avatar: invoice.customers?.logoUrl || '/placeholder.svg',
+              name: invoice.customers?.toName || 'Unknown',
+              avatar: '/placeholder.svg',
               id: invoice.customers?.id || null
             },
             status: invoice.status || 'Paid',

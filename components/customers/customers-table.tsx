@@ -12,11 +12,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Customer {
   id: string
-  contactName: string
-  email: string
-  address: string
-  logoUrl?: string
-  companyName?: string
+  toName: string
+  toEmail: string
+  toAddress: string
 }
 
 export function CustomersTable() {
@@ -45,8 +43,8 @@ export function CustomersTable() {
     if (!searchQuery.trim()) return true
     
     const query = searchQuery.toLowerCase()
-    const matchesName = customer.contactName?.toLowerCase().includes(query)
-    const matchesEmail = customer.email?.toLowerCase().includes(query)
+    const matchesName = customer.toName?.toLowerCase().includes(query)
+    const matchesEmail = customer.toEmail?.toLowerCase().includes(query)
     
     return matchesName || matchesEmail
   })
@@ -101,9 +99,6 @@ export function CustomersTable() {
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Address
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Company
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -116,27 +111,24 @@ export function CustomersTable() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <Avatar className="w-8 h-8">
-                      <AvatarImage src={customer.logoUrl || "/placeholder.svg"} />
+                      <AvatarImage src={"/placeholder.svg"} />
                       <AvatarFallback>
-                        {customer.contactName
+                        {customer.toName
                           ?.split(" ")
                           .map((n) => n[0])
                           .join("") || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <span className="ml-3 text-sm font-medium text-foreground">
-                      {customer.contactName}
+                      {customer.toName}
                     </span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                  {customer.email || "—"}
+                  {customer.toEmail || "—"}
                 </td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {customer.address || "—"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                  {customer.companyName || "—"}
+                  {customer.toAddress || "—"}
                 </td>
               </tr>
             ))}

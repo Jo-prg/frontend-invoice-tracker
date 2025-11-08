@@ -36,10 +36,17 @@ export interface InvoiceData {
 }
 
 export interface Customers {
+  toName: string
+  toEmail: string
+  toAddress: string
+}
+
+export interface UserCompany {
   companyName: string
-  logoUrl: string
+  companyLogo: string
   companyDetails: string
-  contactName: string
-  email: string
   address: string
+  fromName: string
+  fromEmail: string
+  fromAddress: string
 }

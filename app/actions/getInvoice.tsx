@@ -3,30 +3,42 @@
 import { createClient } from "@/lib/supabase/server"
 import type { InvoiceData } from "@/types/invoice"
 
-// Utility to convert snake_case keys to camelCase
-function toCamelCase(obj: any): any {
-  if (Array.isArray(obj)) {
-    return obj.map(toCamelCase)
-  } else if (obj !== null && typeof obj === "object") {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, value]) => [
-        key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase()),
-        toCamelCase(value),
-      ])
-    )
-  }
-  return obj
-}
-
 export async function getInvoice(invoiceId: string) {
   const supabase = await createClient()
 
+  // Fetch invoice, customers, and line items only
   const { data: invoice, error } = await supabase
     .from('invoices')
     .select(`
-      *,
-      customers (*),
-      invoice_line_items (*)
+      id,
+      invoice_number,
+      date,
+      due_date,
+      notes,
+      tax_rate,
+      currency,
+      footer,
+      discount_type,
+      discount_value,
+      apply_invoice_discount_to_discounted_items,
+      status,
+      customer_id,
+      customers (
+        id,
+        to_name,
+        to_email,
+        to_address
+      ),
+      invoice_line_items (
+        id,
+        description,
+        quantity,
+        price,
+        currency,
+        exchange_rate,
+        discount_type,
+        discount_value
+      )
     `)
     .eq('id', invoiceId)
     .single()
@@ -39,21 +51,46 @@ export async function getInvoice(invoiceId: string) {
     return { success: false, message: "Invoice not found" }
   }
 
-  // Transform database structure to InvoiceData format
+  // Fetch user_company info separately
+  const { data: companyData, error: companyError } = await supabase
+    .from('user_company')
+    .select(`
+      company_name,
+      company_logo,
+      company_details,
+      from_name,
+      from_email,
+      from_address
+    `)
+    .single()
+
+  if (companyError) {
+    return { success: false, message: companyError.message }
+  }
+
+  const userCompany = companyData?.company_name || "";
+  const companyLogo = companyData?.company_logo || "";
+  const companyDetails = companyData?.company_details || "";
+  const fromName = companyData?.from_name || "";
+  const fromEmail = companyData?.from_email || "";
+  const fromAddress = companyData?.from_address || "";
+
+  const customers = Array.isArray(invoice.customers) ? invoice.customers[0] : invoice.customers;
+
   const invoiceData: InvoiceData = {
     id: invoice.id,
     invoiceNumber: invoice.invoice_number,
     date: invoice.date,
     dueDate: invoice.due_date,
-    companyName: invoice.customers?.company_name || "",
-    companyLogo: invoice.customers?.logo_url || "",
-    companyDetails: invoice.customers?.company_details || "",
-    fromName: invoice.from_name,
-    fromEmail: invoice.from_email,
-    fromAddress: invoice.from_address,
-    toName: invoice.customers?.contact_name || "",
-    toEmail: invoice.customers?.email || "",
-    toAddress: invoice.customers?.address || "",
+    companyName: userCompany,
+    companyLogo,
+    companyDetails,
+    fromName,
+    fromEmail,
+    fromAddress,
+    toName: customers?.to_name || "",
+    toEmail: customers?.to_email || "",
+    toAddress: customers?.to_address || "",
     items: invoice.invoice_line_items?.map((item: any) => ({
       id: item.id,
       description: item.description,

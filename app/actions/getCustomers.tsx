@@ -22,8 +22,8 @@ export async function getCustomers() {
 
   const { data: customers, error } = await supabase
     .from('customers')
-    .select('*')
-    .order('contact_name', { ascending: true })
+    .select('id, to_name, to_email, to_address')
+    .order('to_name', { ascending: true })
 
   if (error) {
     console.error('Error fetching customers:', error)
