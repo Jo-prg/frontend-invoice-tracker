@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ArrowLeft, Mail, MapPin, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, Mail, MapPin, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getCustomerWithInvoices } from "@/app/actions/getCustomerWithInvoices"
 import { updateInvoiceStatus } from "@/app/actions/updateInvoiceStatus"
@@ -187,6 +187,16 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
     }
   }
 
+  const handleCreateInvoice = () => {
+    const params = new URLSearchParams({
+      toName: customer.contactName || '',
+      toEmail: customer.email || '',
+      toAddress: customer.address || '',
+      companyName: customer.companyName || '',
+    })
+    router.push(`/invoice-generator?${params.toString()}`)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -213,7 +223,13 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
           </Button>
           <h1 className="text-2xl font-semibold">Customer Details</h1>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <Button onClick={handleCreateInvoice} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Create Invoice
+          </Button>
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Customer Info */}

@@ -34,9 +34,9 @@ export default function InvoiceGeneratorForm() {
     fromName: "",
     fromEmail: "",
     fromAddress: "",
-    toName: "",
-    toEmail: "",
-    toAddress: "",
+    toName: searchParams.get('toName') || "",
+    toEmail: searchParams.get('toEmail') || "",
+    toAddress: searchParams.get('toAddress') || "",
     items: [
       {
         id: "item-1",
@@ -75,6 +75,20 @@ export default function InvoiceGeneratorForm() {
           router.push('/invoice-generator')
         }
         setIsLoading(false)
+      } else {
+        // Pre-fill customer data from URL params if available
+        const toName = searchParams.get('toName')
+        const toEmail = searchParams.get('toEmail')
+        const toAddress = searchParams.get('toAddress')
+        
+        if (toName || toEmail || toAddress) {
+          setInvoiceData(prev => ({
+            ...prev,
+            toName: toName || prev.toName,
+            toEmail: toEmail || prev.toEmail,
+            toAddress: toAddress || prev.toAddress,
+          }))
+        }
       }
     }
 

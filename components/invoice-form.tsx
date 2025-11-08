@@ -529,7 +529,7 @@ export default function InvoiceForm({
           {isSaving ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : null}
-          {isEditing ? 'Update Invoice' : 'Save Invoice'}
+          Save Invoice
         </Button>
       </div>
     </form>
