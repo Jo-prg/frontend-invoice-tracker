@@ -21,6 +21,7 @@ import { ThemeToggle } from "../theme-toggle"
 import { useEffect, useState } from "react"
 import { getInvoices } from "@/app/actions/getInvoices"
 import { deleteInvoice } from "@/app/actions/deleteInvoice"
+import { updateInvoiceStatus } from "@/app/actions/updateInvoiceStatus"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -215,6 +216,25 @@ export function OrdersTable() {
     }
   }
 
+  const handleStatusChange = async (invoiceDbId: string, newStatus: string) => {
+    try {
+      const result = await updateInvoiceStatus(invoiceDbId, newStatus)
+      
+      if (result.success) {
+        toast.success("Status updated successfully")
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.dbId === invoiceDbId ? { ...order, status: newStatus } : order
+          )
+        )
+      } else {
+        toast.error(result.message || "Failed to update status")
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update status")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -353,7 +373,24 @@ export function OrdersTable() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Badge className={`${getStatusColor(order.status)} cursor-pointer`}>
+                          {order.status}
+                        </Badge>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => handleStatusChange(order.dbId, "Paid")}>
+                          Paid
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(order.dbId, "Delivered")}>
+                          Delivered
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(order.dbId, "Completed")}>
+                          Completed
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     {order.total}

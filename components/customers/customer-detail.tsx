@@ -4,11 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ArrowLeft, Mail, MapPin, Building, ArrowUp, ArrowDown } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getCustomerWithInvoices } from "@/app/actions/getCustomerWithInvoices"
+import { updateInvoiceStatus } from "@/app/actions/updateInvoiceStatus"
 import { useRouter } from "next/navigation"
 import { ThemeToggle } from "../theme-toggle"
+import { toast } from "sonner"
 
 interface CustomerDetailProps {
   customerId: string
@@ -150,6 +153,25 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
     
     return matchesInvoiceId || matchesStatus
   })
+
+  const handleStatusChange = async (invoiceDbId: string, newStatus: string) => {
+    try {
+      const result = await updateInvoiceStatus(invoiceDbId, newStatus)
+      
+      if (result.success) {
+        toast.success("Status updated successfully")
+        setInvoices(prevInvoices => 
+          prevInvoices.map(inv => 
+            inv.dbId === invoiceDbId ? { ...inv, status: newStatus } : inv
+          )
+        )
+      } else {
+        toast.error(result.message || "Failed to update status")
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update status")
+    }
+  }
 
   if (loading) {
     return (
@@ -306,7 +328,24 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
                   {invoice.id}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <Badge className={getStatusColor(invoice.status)}>{invoice.status}</Badge>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Badge className={`${getStatusColor(invoice.status)} cursor-pointer`}>
+                        {invoice.status}
+                      </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onClick={() => handleStatusChange(invoice.dbId, "Paid")}>
+                        Paid
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleStatusChange(invoice.dbId, "Delivered")}>
+                        Delivered
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleStatusChange(invoice.dbId, "Completed")}>
+                        Completed
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                   {invoice.total}
