@@ -81,14 +81,25 @@ export async function saveInvoice(invoice: InvoiceData) {
   });
 
   let customer;
-  let customerId = invoice.customerId;
+  let customerId;
 
-  if (customerId) {
+  // Check if a customer with this email already exists for the current user
+  const { data: existingCustomer, error: customerFetchError } = await supabase
+    .from('customers')
+    .select()
+    .eq('to_email', customerData.to_email)
+    .maybeSingle();
+
+  if (customerFetchError) {
+    return { success: false, message: customerFetchError.message }
+  }
+
+  if (existingCustomer) {
     // Update existing customer
     const { data: updatedCustomer, error: customerError } = await supabase
       .from('customers')
       .update(customerData)
-      .eq('id', customerId)
+      .eq('id', existingCustomer.id)
       .select()
       .single();
 
@@ -96,6 +107,7 @@ export async function saveInvoice(invoice: InvoiceData) {
       return { success: false, message: customerError.message }
     }
     customer = updatedCustomer;
+    customerId = updatedCustomer.id;
   } else {
     // Insert new customer
     const { data: newCustomer, error: customerError } = await supabase
