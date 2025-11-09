@@ -62,6 +62,7 @@ export default function InvoiceGeneratorForm() {
 
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
 
   useEffect(() => {
     async function loadInvoice() {
@@ -275,12 +276,19 @@ export default function InvoiceGeneratorForm() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setIsUploadingLogo(true)
       const reader = new FileReader()
       reader.onloadend = () => {
         setInvoiceData({
           ...invoiceData,
           companyLogo: reader.result as string,
         })
+        setIsUploadingLogo(false)
+        toast.success("Logo loaded. Save the invoice to upload it to storage.")
+      }
+      reader.onerror = () => {
+        setIsUploadingLogo(false)
+        toast.error("Failed to read logo file")
       }
       reader.readAsDataURL(file)
     }

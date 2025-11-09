@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import type { InvoiceData, Customers } from "@/types/invoice"
+import { uploadLogo, deleteLogo } from "./uploadLogo"
 
 // Utility to convert camelCase keys to snake_case
 function toSnakeCase(obj: any): any {
@@ -73,7 +74,30 @@ export async function saveInvoice(invoice: InvoiceData) {
   const supabase = await createClient()
   const customerData = toSnakeCase(getCustomerData(invoice));
   const invoiceData = toSnakeCase(getInvoiceData(invoice));  
-  const companyData = toSnakeCase(getCompanyData(invoice));
+  let companyData = toSnakeCase(getCompanyData(invoice));
+  
+  // Handle logo upload if it's a base64 string (new upload)
+  if (companyData.company_logo && companyData.company_logo.startsWith('data:image')) {
+    const uploadResult = await uploadLogo(companyData.company_logo)
+    
+    if (!uploadResult.success) {
+      return { success: false, message: `Logo upload failed: ${uploadResult.message}` }
+    }
+    
+    // Check if there's an existing logo to delete
+    const { data: existingCompany } = await supabase
+      .from('user_company')
+      .select('company_logo')
+      .single();
+    
+    if (existingCompany?.company_logo && !existingCompany.company_logo.startsWith('data:image')) {
+      // Delete old logo (don't fail if deletion fails)
+      await deleteLogo(existingCompany.company_logo)
+    }
+    
+    companyData.company_logo = uploadResult.url
+  }
+  
   // Remove 'id' from each item before saving
   const lineItems = toSnakeCase(invoice["items"]).map((item: any) => {
     const { id, ...rest } = item
