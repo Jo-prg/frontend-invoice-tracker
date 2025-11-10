@@ -14,7 +14,7 @@ Invoice Tracker is a full-stack web application built to showcase my skills in m
   - Responsive UI for desktop
   - Dashboard with invoice summaries and quick actions
   - Modern authentication and routing (sign up, login, password reset)
-  - Guest mode: recruiters and users can try the app without signing up
+  - Guest mode: users can try the app without signing up
   - Invoice PDF export and download
   - Invoice status management (Paid, Delivered, Completed, Unsent)
   - Invoice discounts, tax calculation, and currency support
@@ -39,7 +39,6 @@ To explore and evaluate Invoice Tracker:
 3. **Feature Walkthrough:** 
    - Log in or sign up to access the dashboard.
    - Add, edit, and delete invoices to experience the core functionality.
-   - View invoice summaries and responsive layouts on both desktop and mobile devices.
 
 ---
 
