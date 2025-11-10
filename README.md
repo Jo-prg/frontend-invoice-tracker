@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Invoice Tracker
+
+Invoice Tracker is a full-stack web application built to showcase my skills in modern web development. It combines a robust backend with a responsive frontend to provide a seamless experience for tracking invoices. The project demonstrates best practices in both client-side and server-side development, including authentication, data persistence, and secure server actions.
+
+> **Note:** No custom backend code is required for this project. All server-side logic is implemented using [Next.js Server Actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions) and Supabase. This approach enables secure, scalable, and maintainable backend functionality directly within the Next.js codebase.
+
+## Project Overview
+
+- **Purpose:** Track, manage, and visualize invoices efficiently.
+- **Features:** 
+  - Add, edit, and delete invoices
+  - Manage customers and view customer details with invoice history
+  - Company branding: upload and manage your company logo and details
+  - Responsive UI for desktop
+  - Dashboard with invoice summaries and quick actions
+  - Modern authentication and routing (sign up, login, password reset)
+  - Guest mode: recruiters and users can try the app without signing up
+  - Invoice PDF export and download
+  - Invoice status management (Paid, Delivered, Completed, Unsent)
+  - Invoice discounts, tax calculation, and currency support
+  - Real-time updates and data persistence with Supabase
+  - Secure server actions and middleware for access control
+  - Accessible design and keyboard navigation
+  - Error handling and user feedback via toast notifications
+
+## Technologies Used
+- **Next.js**: React framework for server-side rendering and routing
+- **TypeScript**: Type-safe development for reliability and maintainability
+- **Tailwind CSS**: Utility-first CSS for rapid UI development
+- **React**: Component-based architecture
+- **Supabase**: Open-source Firebase alternative providing hosted PostgreSQL, real-time subscriptions, authentication, and storage
 
 ## Getting Started
 
-First, run the development server:
+To explore and evaluate Invoice Tracker:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. **Live Demo:** Visit the deployed application at [https://your-demo-url.com](https://your-demo-url.com) (replace with actual URL if available).
+2. **Source Code:** Browse the codebase in this repository to review architecture, design, and implementation.
+3. **Feature Walkthrough:** 
+   - Log in or sign up to access the dashboard.
+   - Add, edit, and delete invoices to experience the core functionality.
+   - View invoice summaries and responsive layouts on both desktop and mobile devices.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**To run the project locally:**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Jo-prg/frontend-invoice-tracker.git
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   # or
+   bun install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   # or
+   bun dev
+   ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
