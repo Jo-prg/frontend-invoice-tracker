@@ -17,6 +17,8 @@ import { saveInvoice } from "@/app/actions/saveInvoice"
 import { getInvoice } from "@/app/actions/getInvoice"
 import { getUserCompany } from "@/app/actions/getUserCompany"
 import { useSearchParams, useRouter } from "next/navigation"
+import { isGuestMode } from "@/lib/auth/guestMode"
+import { getGuestInvoice, saveGuestInvoice, getGuestCompany, setGuestCompany } from "@/lib/auth/guestStorage"
 
 export default function InvoiceGeneratorForm() {
   const [activeTab, setActiveTab] = useState("edit")
@@ -63,35 +65,74 @@ export default function InvoiceGeneratorForm() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+  const [isGuest, setIsGuest] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
+    const guestStatus = isGuestMode()
+    setIsGuest(guestStatus)
+    setIsInitialized(true)
+  }, [])
+
+  useEffect(() => {
+    // Wait for guest mode to be determined before loading
+    if (!isInitialized) return
+
     async function loadInvoice() {
       if (invoiceId) {
         setIsLoading(true)
-        const result = await getInvoice(invoiceId)
         
-        if (result.success && result.data) {
-          setInvoiceData(result.data)
+        if (isGuest) {
+          // Load from localStorage
+          const guestInv = getGuestInvoice(invoiceId)
+          if (guestInv) {
+            setInvoiceData(guestInv)
+          } else {
+            toast.error("Invoice not found")
+            router.push('/invoice-generator')
+          }
         } else {
-          toast.error(result.message || "Failed to load invoice")
-          router.push('/invoice-generator')
+          const result = await getInvoice(invoiceId)
+          
+          if (result.success && result.data) {
+            setInvoiceData(result.data)
+          } else {
+            toast.error(result.message || "Failed to load invoice")
+            router.push('/invoice-generator')
+          }
         }
         setIsLoading(false)
       } else {
         // Fetch company data to pre-fill fields
         setIsLoading(true)
-        const companyResult = await getUserCompany()
         
-        if (companyResult.success && companyResult.data) {
-          setInvoiceData(prev => ({
-            ...prev,
-            companyName: companyResult.data.companyName,
-            companyLogo: companyResult.data.companyLogo,
-            companyDetails: companyResult.data.companyDetails,
-            fromName: companyResult.data.fromName,
-            fromEmail: companyResult.data.fromEmail,
-            fromAddress: companyResult.data.fromAddress,
-          }))
+        if (isGuest) {
+          const guestCompany = getGuestCompany()
+          if (guestCompany) {
+            setInvoiceData(prev => ({
+              ...prev,
+              companyName: guestCompany.companyName || "",
+              companyLogo: guestCompany.companyLogo || "",
+              companyDetails: guestCompany.companyDetails || "",
+              fromName: guestCompany.fromName || "",
+              fromEmail: guestCompany.fromEmail || "",
+              fromAddress: guestCompany.fromAddress || "",
+            }))
+          }
+        } else {
+          const companyResult = await getUserCompany()
+          
+          if (companyResult.success && companyResult.data) {
+            setInvoiceData(prev => ({
+              ...prev,
+              companyName: companyResult.data.companyName,
+              companyLogo: companyResult.data.companyLogo,
+              companyDetails: companyResult.data.companyDetails,
+              fromName: companyResult.data.fromName,
+              fromEmail: companyResult.data.fromEmail,
+              fromAddress: companyResult.data.fromAddress,
+            }))
+          }
         }
 
         // Pre-fill customer data from URL params if available
@@ -113,7 +154,7 @@ export default function InvoiceGeneratorForm() {
     }
 
     loadInvoice()
-  }, [invoiceId, router])
+  }, [invoiceId, router, isGuest, isInitialized])
 
   const handleInvoiceChange = (field: string, value: string | number | boolean) => {
     if (field === "currency") {
@@ -298,23 +339,40 @@ export default function InvoiceGeneratorForm() {
     setIsSaving(true)
     e.preventDefault()
     try {
-      const result = await saveInvoice(invoiceData)
-      if (result && result.success === false) {
-        toast.error(result.message || "There was an error saving your invoice.", {
-          description: "Save Failed",
+      if (isGuest) {
+        // Save to localStorage
+        const savedInvoice = saveGuestInvoice(invoiceData)
+        
+        // Save company data separately
+        setGuestCompany({
+          companyName: invoiceData.companyName,
+          companyLogo: invoiceData.companyLogo,
+          companyDetails: invoiceData.companyDetails,
+          fromName: invoiceData.fromName,
+          fromEmail: invoiceData.fromEmail,
+          fromAddress: invoiceData.fromAddress,
         })
-      } else {
+        
         toast.success(invoiceId ? "Your invoice was updated successfully." : "Your invoice was saved successfully.", {
           description: invoiceId ? "Invoice Updated" : "Invoice Saved",
         })
-        if (!invoiceId && result.data) {
-          router.push(`/invoice-generator?id=${result.data.id}`)
+        
+        if (!invoiceId) {
+          router.push(`/invoice-generator?id=${savedInvoice.id}`)
+        }
+      } else {
+        const result = await saveInvoice(invoiceData)
+        if (result && result.success === false) {
+          toast.error(result.message || "There was an error saving your invoice.")
+        } else {
+          toast.success(invoiceId ? "Your invoice was updated successfully." : "Your invoice was saved successfully.")
+          if (!invoiceId && result.data) {
+            router.push(`/invoice-generator?id=${result.data.id}`)
+          }
         }
       }
     } catch (error: any) {
-      toast.error(error?.message || "There was an error saving your invoice.", {
-        description: "Save Failed",
-      })
+      toast.error(error?.message || "There was an error saving your invoice.")
     } finally {
       setIsSaving(false)
     }

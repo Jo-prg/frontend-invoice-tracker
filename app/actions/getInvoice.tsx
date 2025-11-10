@@ -3,8 +3,18 @@
 import { createClient } from "@/lib/supabase/server"
 import type { InvoiceData } from "@/types/invoice"
 import { getUserCompany } from "./getUserCompany"
+import { cookies } from "next/headers"
 
 export async function getInvoice(invoiceId: string) {
+  // Check if user is in guest mode
+  const cookieStore = await cookies()
+  const isGuest = cookieStore.get('guest_mode')?.value === 'true'
+  
+  if (isGuest) {
+    // Return null - client will handle guest data
+    return { success: true, data: null, isGuest: true }
+  }
+  
   const supabase = await createClient()
 
   // Fetch invoice, customers, and line items only

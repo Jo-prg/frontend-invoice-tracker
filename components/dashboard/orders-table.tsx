@@ -24,11 +24,13 @@ import { deleteInvoice } from "@/app/actions/deleteInvoice"
 import { updateInvoiceStatus } from "@/app/actions/updateInvoiceStatus"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { isGuestMode } from "@/lib/auth/guestMode"
+import { getGuestInvoices, deleteGuestInvoice, saveGuestInvoice } from "@/lib/auth/guestStorage"
 
 interface Order {
   id: string
   dbId: string
-  customer: { name: string; avatar: string; id: string; email: string }
+  customer: { name: string; avatar: string; id: string | null; email: string }
   status: string
   total: string
   date: string
@@ -72,6 +74,8 @@ export function OrdersTable() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [isGuest, setIsGuest] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   const router = useRouter()
 
   const sortOrders = (ordersToSort: Order[], sortOption: "status" | "total" | "date", direction: "asc" | "desc") => {
@@ -110,14 +114,24 @@ export function OrdersTable() {
   }
 
   useEffect(() => {
+    const guestStatus = isGuestMode()
+    setIsGuest(guestStatus)
+    setIsInitialized(true)
+  }, [])
+
+  useEffect(() => {
+    // Wait for guest mode to be determined before fetching
+    if (!isInitialized) return
+
     async function fetchInvoices() {
       setLoading(true)
-      const result = await getInvoices()
       
-      if (result.success && result.data) {
-        const transformedOrders = result.data.map((invoice: any) => {
+      if (isGuest) {
+        // Load from localStorage
+        const guestInvoices = getGuestInvoices()
+        const transformedOrders = guestInvoices.map((invoice: any) => {
           // Calculate total from line items
-          const subtotal = invoice.invoiceLineItems?.reduce((sum: number, item: any) => {
+          const subtotal = invoice.items?.reduce((sum: number, item: any) => {
             const quantity = Number(item.quantity) || 0
             const price = Number(item.price) || 0
             const itemTotal = quantity * price
@@ -152,10 +166,10 @@ export function OrdersTable() {
             id: invoice.invoiceNumber,
             dbId: invoice.id,
             customer: {
-              name: invoice.customers?.toName || 'Unknown',
+              name: invoice.toName || 'Unknown',
               avatar: '/placeholder.svg',
-              id: invoice.customers?.id || null,
-              email: invoice.customers?.toEmail || ''
+              id: null,
+              email: invoice.toEmail || ''
             },
             status: invoice.status || 'Paid',
             total: `${invoice.currency || '$'}${total.toFixed(2)}`,
@@ -165,12 +179,68 @@ export function OrdersTable() {
         })
         
         setOrders(sortOrders(transformedOrders, sortBy, sortDirection))
+      } else {
+        // Load from database
+        const result = await getInvoices()
+        
+        if (result.success && result.data) {
+          const transformedOrders = result.data.map((invoice: any) => {
+            // Calculate total from line items
+            const subtotal = invoice.invoiceLineItems?.reduce((sum: number, item: any) => {
+              const quantity = Number(item.quantity) || 0
+              const price = Number(item.price) || 0
+              const itemTotal = quantity * price
+              
+              let discountAmount = 0
+              if (item.discountType === 'percentage') {
+                discountAmount = itemTotal * (Number(item.discountValue) / 100)
+              } else if (item.discountType === 'amount') {
+                discountAmount = Number(item.discountValue) || 0
+              }
+              
+              return sum + itemTotal - discountAmount
+            }, 0) || 0
+
+            // Apply invoice-level discount
+            let total = subtotal
+            const invoiceDiscountValue = Number(invoice.discountValue) || 0
+            
+            if (invoice.discountType === 'percentage') {
+              total = subtotal * (1 - invoiceDiscountValue / 100)
+            } else if (invoice.discountType === 'amount') {
+              total = subtotal - invoiceDiscountValue
+            }
+
+            // Apply tax
+            const taxRate = Number(invoice.taxRate) || 0
+            total = total * (1 + taxRate / 100)
+
+            const invoiceDate = new Date(invoice.date)
+
+            return {
+              id: invoice.invoiceNumber,
+              dbId: invoice.id,
+              customer: {
+                name: invoice.customers?.toName || 'Unknown',
+                avatar: '/placeholder.svg',
+                id: invoice.customers?.id || null,
+                email: invoice.customers?.toEmail || ''
+              },
+              status: invoice.status || 'Paid',
+              total: `${invoice.currency || '$'}${total.toFixed(2)}`,
+              date: invoiceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              dateValue: invoiceDate.getTime()
+            }
+          })
+          
+          setOrders(sortOrders(transformedOrders, sortBy, sortDirection))
+        }
       }
       setLoading(false)
     }
 
     fetchInvoices()
-  }, [])
+  }, [isGuest, isInitialized])
 
   useEffect(() => {
     setOrders(prevOrders => sortOrders(prevOrders, sortBy, sortDirection))
@@ -207,22 +277,22 @@ export function OrdersTable() {
 
     setIsDeleting(true)
     try {
-      const result = await deleteInvoice(selectedOrderId)
-      
-      if (result.success) {
-        toast.success("Invoice deleted successfully", {
-          description: "The invoice has been removed from your records.",
-        })
+      if (isGuest) {
+        deleteGuestInvoice(selectedOrderId)
+        toast.success("Invoice deleted successfully")
         setOrders(orders.filter(order => order.dbId !== selectedOrderId))
       } else {
-        toast.error(result.message || "Failed to delete invoice", {
-          description: "There was an error deleting the invoice.",
-        })
+        const result = await deleteInvoice(selectedOrderId)
+        
+        if (result.success) {
+          toast.success("Invoice deleted successfully")
+          setOrders(orders.filter(order => order.dbId !== selectedOrderId))
+        } else {
+          toast.error(result.message || "Failed to delete invoice")
+        }
       }
     } catch (error: any) {
-      toast.error(error?.message || "Failed to delete invoice", {
-        description: "An unexpected error occurred.",
-      })
+      toast.error(error?.message || "Failed to delete invoice")
     } finally {
       setIsDeleting(false)
       setDeleteDialogOpen(false)
@@ -230,19 +300,35 @@ export function OrdersTable() {
     }
   }
 
-  const handleStatusChange = async (invoiceDbId: string, newStatus: string) => {
+  const handleStatusChange = async (invoiceDbId: string, newStatus: "Paid" | "Delivered" | "Completed") => {
     try {
-      const result = await updateInvoiceStatus(invoiceDbId, newStatus)
-      
-      if (result.success) {
-        toast.success("Status updated successfully")
-        setOrders(prevOrders => 
-          prevOrders.map(order => 
-            order.dbId === invoiceDbId ? { ...order, status: newStatus } : order
+      if (isGuest) {
+        const guestInvoices = getGuestInvoices()
+        const invoiceToUpdate = guestInvoices.find(inv => inv.id === invoiceDbId)
+        
+        if (invoiceToUpdate) {
+          invoiceToUpdate.status = newStatus
+          saveGuestInvoice(invoiceToUpdate)
+          toast.success("Status updated successfully")
+          setOrders(prevOrders => 
+            prevOrders.map(order => 
+              order.dbId === invoiceDbId ? { ...order, status: newStatus } : order
+            )
           )
-        )
+        }
       } else {
-        toast.error(result.message || "Failed to update status")
+        const result = await updateInvoiceStatus(invoiceDbId, newStatus)
+        
+        if (result.success) {
+          toast.success("Status updated successfully")
+          setOrders(prevOrders => 
+            prevOrders.map(order => 
+              order.dbId === invoiceDbId ? { ...order, status: newStatus } : order
+            )
+          )
+        } else {
+          toast.error(result.message || "Failed to update status")
+        }
       }
     } catch (error: any) {
       toast.error(error?.message || "Failed to update status")
@@ -363,7 +449,10 @@ export function OrdersTable() {
                         className="ml-3 text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
                         onClick={(e) => {
                           e.stopPropagation()
-                          if (order.customer.id) {
+                          if (isGuest && order.customer.email) {
+                            // Use email as ID for guest mode
+                            router.push(`/customers/${encodeURIComponent(order.customer.email)}`)
+                          } else if (order.customer.id) {
                             router.push(`/customers/${order.customer.id}`)
                           }
                         }}

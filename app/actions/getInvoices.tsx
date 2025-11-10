@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { getUserCompany } from "./getUserCompany"
+import { cookies } from "next/headers"
 
 // Utility to convert snake_case keys to camelCase
 function toCamelCase(obj: any): any {
@@ -19,6 +20,15 @@ function toCamelCase(obj: any): any {
 }
 
 export async function getInvoices() {
+  // Check if user is in guest mode
+  const cookieStore = await cookies()
+  const isGuest = cookieStore.get('guest_mode')?.value === 'true'
+  
+  if (isGuest) {
+    // Return empty array - client will handle guest data
+    return { success: true, data: [], isGuest: true }
+  }
+  
   const supabase = await createClient()
 
   // Fetch invoices with customers and line items only

@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 // Utility to convert snake_case keys to camelCase
 function toCamelCase(obj: any): any {
@@ -18,6 +19,26 @@ function toCamelCase(obj: any): any {
 }
 
 export async function getUserCompany() {
+  // Check if user is in guest mode
+  const cookieStore = await cookies()
+  const isGuest = cookieStore.get('guest_mode')?.value === 'true'
+  
+  if (isGuest) {
+    // Return empty company data - client will handle guest storage
+    return {
+      success: true,
+      data: {
+        companyName: "",
+        companyLogo: "",
+        companyDetails: "",
+        fromName: "",
+        fromEmail: "",
+        fromAddress: "",
+      },
+      isGuest: true
+    }
+  }
+  
   const supabase = await createClient()
 
   const { data: companyData, error } = await supabase

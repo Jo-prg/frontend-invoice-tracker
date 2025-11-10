@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,8 @@ import { toast } from "sonner"
 import { updateEmail } from "@/app/actions/updateEmail"
 import { updatePassword } from "@/app/actions/updatePassword"
 import { useRouter } from "next/navigation"
+import { isGuestMode } from "@/lib/auth/guestMode"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -20,6 +22,29 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+
+  useEffect(() => {
+    async function checkAccess() {
+      const guestStatus = isGuestMode()
+      
+      if (guestStatus) {
+        toast.error("Settings are not available in guest mode")
+        router.push("/")
+        return
+      }
+      
+      // Also verify actual authentication
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        toast.error("Please log in to access settings")
+        router.push("/auth/login")
+      }
+    }
+    
+    checkAccess()
+  }, [router])
 
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault()

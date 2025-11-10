@@ -13,6 +13,8 @@ import { updateInvoiceStatus } from "@/app/actions/updateInvoiceStatus"
 import { useRouter } from "next/navigation"
 import { ThemeToggle } from "../theme-toggle"
 import { toast } from "sonner"
+import { isGuestMode } from "@/lib/auth/guestMode"
+import { getGuestInvoices, saveGuestInvoice } from "@/lib/auth/guestStorage"
 
 interface CustomerDetailProps {
   customerId: string
@@ -50,6 +52,8 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [isGuest, setIsGuest] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   const router = useRouter()
 
   const sortInvoices = (invoicesToSort: Invoice[], sortOption: "status" | "total" | "date", direction: "asc" | "desc") => {
@@ -86,62 +90,136 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
   }
 
   useEffect(() => {
+    const guestStatus = isGuestMode()
+    setIsGuest(guestStatus)
+    setIsInitialized(true)
+  }, [])
+
+  useEffect(() => {
+    // Wait for guest mode to be determined before fetching
+    if (!isInitialized) return
+
     async function fetchCustomerData() {
       setLoading(true)
-      const result = await getCustomerWithInvoices(customerId)
       
-      if (result.success && result.data) {
-        setCustomer(result.data.customer)
+      if (isGuest) {
+        // Decode the customer ID (email) from URL
+        const decodedCustomerId = decodeURIComponent(customerId)
         
-        // Transform invoices
-        const transformedInvoices = result.data.invoices.map((invoice: any) => {
-          const subtotal = invoice.invoiceLineItems?.reduce((sum: number, item: any) => {
-            const quantity = Number(item.quantity) || 0
-            const price = Number(item.price) || 0
-            const itemTotal = quantity * price
-            
-            let discountAmount = 0
-            if (item.discountType === 'percentage') {
-              discountAmount = itemTotal * (Number(item.discountValue) / 100)
-            } else if (item.discountType === 'amount') {
-              discountAmount = Number(item.discountValue) || 0
-            }
-            
-            return sum + itemTotal - discountAmount
-          }, 0) || 0
-
-          let total = subtotal
-          const invoiceDiscountValue = Number(invoice.discountValue) || 0
+        // Load from localStorage
+        const guestInvoices = getGuestInvoices()
+        const customerInvoices = guestInvoices.filter(
+          (inv: any) => inv.toEmail === decodedCustomerId
+        )
+        
+        if (customerInvoices.length > 0) {
+          const firstInvoice = customerInvoices[0]
+          setCustomer({
+            toName: firstInvoice.toName,
+            toEmail: firstInvoice.toEmail,
+            toAddress: firstInvoice.toAddress
+          })
           
-          if (invoice.discountType === 'percentage') {
-            total = subtotal * (1 - invoiceDiscountValue / 100)
-          } else if (invoice.discountType === 'amount') {
-            total = subtotal - invoiceDiscountValue
-          }
+          // Transform invoices
+          const transformedInvoices = customerInvoices.map((invoice: any) => {
+            const subtotal = invoice.items?.reduce((sum: number, item: any) => {
+              const quantity = Number(item.quantity) || 0
+              const price = Number(item.price) || 0
+              const itemTotal = quantity * price
+              
+              let discountAmount = 0
+              if (item.discountType === 'percentage') {
+                discountAmount = itemTotal * (Number(item.discountValue) / 100)
+              } else if (item.discountType === 'amount') {
+                discountAmount = Number(item.discountValue) || 0
+              }
+              
+              return sum + itemTotal - discountAmount
+            }, 0) || 0
 
-          const taxRate = Number(invoice.taxRate) || 0
-          total = total * (1 + taxRate / 100)
+            let total = subtotal
+            const invoiceDiscountValue = Number(invoice.discountValue) || 0
+            
+            if (invoice.discountType === 'percentage') {
+              total = subtotal * (1 - invoiceDiscountValue / 100)
+            } else if (invoice.discountType === 'amount') {
+              total = subtotal - invoiceDiscountValue
+            }
 
-          const invoiceDate = new Date(invoice.date)
+            const taxRate = Number(invoice.taxRate) || 0
+            total = total * (1 + taxRate / 100)
 
-          return {
-            id: invoice.invoiceNumber,
-            dbId: invoice.id,
-            status: invoice.status || 'Paid',
-            total: `${invoice.currency || '$'}${total.toFixed(2)}`,
-            totalValue: total,
-            date: invoiceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            dateValue: invoiceDate.getTime()
-          }
-        })
+            const invoiceDate = new Date(invoice.date)
+
+            return {
+              id: invoice.invoiceNumber,
+              dbId: invoice.id,
+              status: invoice.status || 'Paid',
+              total: `${invoice.currency || '$'}${total.toFixed(2)}`,
+              totalValue: total,
+              date: invoiceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              dateValue: invoiceDate.getTime()
+            }
+          })
+          
+          setInvoices(sortInvoices(transformedInvoices, sortBy, sortDirection))
+        }
+      } else {
+        const result = await getCustomerWithInvoices(customerId)
         
-        setInvoices(sortInvoices(transformedInvoices, sortBy, sortDirection))
+        if (result.success && result.data) {
+          setCustomer(result.data.customer)
+          
+          // Transform invoices
+          const transformedInvoices = result.data.invoices.map((invoice: any) => {
+            const subtotal = invoice.invoiceLineItems?.reduce((sum: number, item: any) => {
+              const quantity = Number(item.quantity) || 0
+              const price = Number(item.price) || 0
+              const itemTotal = quantity * price
+              
+              let discountAmount = 0
+              if (item.discountType === 'percentage') {
+                discountAmount = itemTotal * (Number(item.discountValue) / 100)
+              } else if (item.discountType === 'amount') {
+                discountAmount = Number(item.discountValue) || 0
+              }
+              
+              return sum + itemTotal - discountAmount
+            }, 0) || 0
+
+            let total = subtotal
+            const invoiceDiscountValue = Number(invoice.discountValue) || 0
+            
+            if (invoice.discountType === 'percentage') {
+              total = subtotal * (1 - invoiceDiscountValue / 100)
+            } else if (invoice.discountType === 'amount') {
+              total = subtotal - invoiceDiscountValue
+            }
+
+            const taxRate = Number(invoice.taxRate) || 0
+            total = total * (1 + taxRate / 100)
+
+            const invoiceDate = new Date(invoice.date)
+
+            return {
+              id: invoice.invoiceNumber,
+              dbId: invoice.id,
+              status: invoice.status || 'Paid',
+              total: `${invoice.currency || '$'}${total.toFixed(2)}`,
+              totalValue: total,
+              date: invoiceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              dateValue: invoiceDate.getTime()
+            }
+          })
+          
+          setInvoices(sortInvoices(transformedInvoices, sortBy, sortDirection))
+        }
       }
       setLoading(false)
     }
 
     fetchCustomerData()
-  }, [customerId])
+  }, [customerId, isGuest, isInitialized])
 
   useEffect(() => {
     setInvoices(prevInvoices => sortInvoices(prevInvoices, sortBy, sortDirection))
@@ -168,19 +246,35 @@ export function CustomerDetail({ customerId }: CustomerDetailProps) {
     setCurrentPage(1)
   }, [searchQuery, sortBy, sortDirection])
 
-  const handleStatusChange = async (invoiceDbId: string, newStatus: string) => {
+  const handleStatusChange = async (invoiceDbId: string, newStatus: "Paid" | "Delivered" | "Completed") => {
     try {
-      const result = await updateInvoiceStatus(invoiceDbId, newStatus)
-      
-      if (result.success) {
-        toast.success("Status updated successfully")
-        setInvoices(prevInvoices => 
-          prevInvoices.map(inv => 
-            inv.dbId === invoiceDbId ? { ...inv, status: newStatus } : inv
+      if (isGuest) {
+        const guestInvoices = getGuestInvoices()
+        const invoiceToUpdate = guestInvoices.find(inv => inv.id === invoiceDbId)
+        
+        if (invoiceToUpdate) {
+          invoiceToUpdate.status = newStatus
+          saveGuestInvoice(invoiceToUpdate)
+          toast.success("Status updated successfully")
+          setInvoices(prevInvoices => 
+            prevInvoices.map(inv => 
+              inv.dbId === invoiceDbId ? { ...inv, status: newStatus } : inv
+            )
           )
-        )
+        }
       } else {
-        toast.error(result.message || "Failed to update status")
+        const result = await updateInvoiceStatus(invoiceDbId, newStatus)
+        
+        if (result.success) {
+          toast.success("Status updated successfully")
+          setInvoices(prevInvoices => 
+            prevInvoices.map(inv => 
+              inv.dbId === invoiceDbId ? { ...inv, status: newStatus } : inv
+            )
+          )
+        } else {
+          toast.error(result.message || "Failed to update status")
+        }
       }
     } catch (error: any) {
       toast.error(error?.message || "Failed to update status")

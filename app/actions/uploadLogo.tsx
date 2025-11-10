@@ -1,8 +1,18 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export async function uploadLogo(base64Image: string, fileName: string = 'company-logo') {
+  // Check if user is in guest mode
+  const cookieStore = await cookies()
+  const isGuest = cookieStore.get('guest_mode')?.value === 'true'
+  
+  if (isGuest) {
+    // For guest mode, just return the base64 string as the "url"
+    return { success: true, url: base64Image, isGuest: true }
+  }
+  
   const supabase = await createClient()
 
   try {
@@ -40,6 +50,15 @@ export async function uploadLogo(base64Image: string, fileName: string = 'compan
 }
 
 export async function deleteLogo(url: string) {
+  // Check if user is in guest mode
+  const cookieStore = await cookies()
+  const isGuest = cookieStore.get('guest_mode')?.value === 'true'
+  
+  if (isGuest) {
+    // For guest mode, nothing to delete from server
+    return { success: true, isGuest: true }
+  }
+  
   const supabase = await createClient()
 
   try {

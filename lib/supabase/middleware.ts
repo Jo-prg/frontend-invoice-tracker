@@ -6,6 +6,9 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  // Check for guest mode cookie
+  const isGuestMode = request.cookies.get('guest_mode')?.value === 'true';
+
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const supabase = createServerClient(
@@ -40,8 +43,16 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
+  // Allow guest users to access the app except settings
+  if (request.nextUrl.pathname.startsWith("/settings") && isGuestMode) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
+
   if (
     !user &&
+    !isGuestMode &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth")
   ) {

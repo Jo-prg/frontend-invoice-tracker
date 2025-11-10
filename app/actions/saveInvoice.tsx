@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import type { InvoiceData, Customers } from "@/types/invoice"
 import { uploadLogo, deleteLogo } from "./uploadLogo"
+import { cookies } from "next/headers"
 
 // Utility to convert camelCase keys to snake_case
 function toSnakeCase(obj: any): any {
@@ -70,7 +71,23 @@ function getInvoiceData(invoice: InvoiceData) {
 }
 
 // Save the invoice to the supabase database
-export async function saveInvoice(invoice: InvoiceData) {    
+export async function saveInvoice(invoice: InvoiceData) {
+  // Check if user is in guest mode
+  const cookieStore = await cookies()
+  const isGuest = cookieStore.get('guest_mode')?.value === 'true'
+  
+  if (isGuest) {
+    // For guest mode, return success - actual storage happens client-side
+    return { 
+      success: true, 
+      data: { 
+        ...invoice, 
+        id: invoice.id || `guest_inv_${Date.now()}` 
+      },
+      isGuest: true 
+    }
+  }
+  
   const supabase = await createClient()
   const customerData = toSnakeCase(getCustomerData(invoice));
   const invoiceData = toSnakeCase(getInvoiceData(invoice));  

@@ -3,8 +3,8 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Sidebar } from "@/components/dashboard/sidebar";
 import { Toaster } from "@/components/ui/sonner"
+import { ConditionalSidebar } from "@/components/dashboard/conditional-sidebar"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +31,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex h-screen overflow-hidden`}>
         <Toaster position="top-center" richColors />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <Sidebar />
+          <ConditionalSidebar />
           <div className="flex-1 overflow-y-auto">{children}</div>            
         </ThemeProvider>
       </body>

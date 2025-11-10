@@ -1,9 +1,21 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
-export async function updateInvoiceStatus(invoiceId: string, status: string) {
+type InvoiceStatus = "Paid" | "Delivered" | "Completed" | "Unsent"
+
+export async function updateInvoiceStatus(invoiceId: string, status: InvoiceStatus) {
   try {
+    // Check if user is in guest mode
+    const cookieStore = await cookies()
+    const isGuest = cookieStore.get('guest_mode')?.value === 'true'
+    
+    if (isGuest) {
+      // For guest mode, return success - actual update happens client-side
+      return { success: true, data: { id: invoiceId, status }, isGuest: true }
+    }
+    
     const supabase = await createClient()
 
     const { data, error } = await supabase

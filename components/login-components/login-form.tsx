@@ -15,6 +15,9 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { loginAsGuest } from "@/app/actions/guestLogin";
+import { setGuestMode, generateGuestSessionId, clearGuestMode } from "@/lib/auth/guestMode";
+import { toast } from "sonner";
 
 export function LoginForm({
   className,
@@ -24,6 +27,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -38,12 +42,39 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
+
+      // Clear guest mode data when logging in as real user
+      clearGuestMode();
+      document.cookie = "guest_mode=; path=/; max-age=0"; // Remove guest cookie
+
       router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setIsGuestLoading(true);
+    try {
+      const sessionId = generateGuestSessionId();
+      setGuestMode(sessionId);
+
+      // Set a cookie for server-side detection
+      document.cookie = `guest_mode=true; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+
+      const result = await loginAsGuest();
+      if (result.success) {
+        toast.success("Logged in as guest", {
+          description: "Some features like settings are limited in guest mode.",
+        });
+        // Force a hard redirect with full page reload
+        window.location.href = "/";
+      }
+    } catch (error) {
+      toast.error("Failed to login as guest");
+      setIsGuestLoading(false);
     }
   };
 
@@ -91,6 +122,15 @@ export function LoginForm({
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGuestLogin}
+                disabled={isGuestLoading || isLoading}
+              >
+                {isGuestLoading ? "Loading..." : "Continue as Guest"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">

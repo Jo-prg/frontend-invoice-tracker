@@ -9,6 +9,8 @@ import { useEffect, useState } from "react"
 import { getCustomers } from "@/app/actions/getCustomers"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { isGuestMode } from "@/lib/auth/guestMode"
+import { getGuestInvoices } from "@/lib/auth/guestStorage"
 
 interface Customer {
   id: string
@@ -23,21 +25,52 @@ export function CustomersTable() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [isGuest, setIsGuest] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
+    const guestStatus = isGuestMode()
+    setIsGuest(guestStatus)
+    setIsInitialized(true)
+  }, [])
+
+  useEffect(() => {
+    // Wait for guest mode to be determined before fetching
+    if (!isInitialized) return
+
     async function fetchCustomers() {
       setLoading(true)
-      const result = await getCustomers()
       
-      if (result.success && result.data) {
-        setCustomers(result.data)
+      if (isGuest) {
+        // Extract unique customers from guest invoices
+        const guestInvoices = getGuestInvoices()
+        const customerMap = new Map()
+        
+        guestInvoices.forEach((invoice: any) => {
+          if (invoice.toEmail && !customerMap.has(invoice.toEmail)) {
+            customerMap.set(invoice.toEmail, {
+              id: invoice.toEmail, // Use email as ID for guest mode
+              toName: invoice.toName || 'Unknown',
+              toEmail: invoice.toEmail,
+              toAddress: invoice.toAddress || ''
+            })
+          }
+        })
+        
+        setCustomers(Array.from(customerMap.values()))
+      } else {
+        const result = await getCustomers()
+        
+        if (result.success && result.data) {
+          setCustomers(result.data)
+        }
       }
       setLoading(false)
     }
 
     fetchCustomers()
-  }, [])
+  }, [isGuest, isInitialized])
 
   const filteredCustomers = customers.filter((customer) => {
     if (!searchQuery.trim()) return true
